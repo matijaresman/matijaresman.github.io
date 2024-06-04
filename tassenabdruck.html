@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        @font-face {
+            font-family: 'Roboto-Regular';
+            src: url('Roboto-Regular.ttf') format('truetype');
+        }
+        body {
+            font-family: 'Roboto-Regular', Arial, sans-serif;
+        }
+        .quiz-container {
+            position: absolute;
+            top: 20px; /* Adjust as needed */
+            left: 20px; /* Adjust as needed */
+            background-color: rgba(255, 255, 255); /* Semi-transparent background */
+            padding: 20px; /* Adjust as needed */
+            z-index: 10; /* Ensure it appears on top */
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        .results {
+            display: none;
+            margin-top: 20px;
+        }
+            
+        .bg-image {
+            position: absolute;
+            width: 100px; /* Adjust the size as needed */
+            height: 100px; /* Adjust the size as needed */
+            object-fit: cover; 
+        }
+        
+        #background {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* Optional: to see image overlay */
+        }
+    </style>
+</head>
+<body>
+    <div id="background"></div>
+    <div class="quiz-container">
+        <h1>Quiz</h1>
+          <div>Take part in the survey and get a chance to win a 3D printed HAW cup!</div>
+        <form id="quizForm">
+            <div class="question">
+                <p>How many semesters do you plan to study at the HAW?</p>
+                <input type="radio" id="a1" name="q1" value="3">
+                <label for="animal1">1 - 3</label><br>
+                <input type="radio" id="a2" name="q1" value="7">
+                <label for="animal2">4 - 7</label><br>
+                <input type="radio" id="a3" name="q1" value="12">
+                <label for="animal3">More than 7</label><br>
+            </div>
+            <div class="question">
+                <p>How many hot bevarages do you buy on average per week at the Finkenau Mensa Cafe?</p>
+                <input type="radio" id="a4" name="q2" value="2">
+                <label for="color1">0 - 2</label><br>
+                <input type="radio" id="a5" name="q2" value="5">
+                <label for="color2">3 - 5</label><br>
+                <input type="radio" id="a6" name="q2" value="12">
+                <label for="color3">More than 5</label><br>
+            </div>
+            <div class="question">
+                <p>How often do you return your used cups to the Mensa Cafe?</p>
+                <input type="radio" id="a7" name="q3" value="0">
+                <label for="color1">Always!</label><br>
+                <input type="radio" id="a8" name="q3" value="80">
+                <label for="color2">Whenever I feel like it, I guess.</label><br>
+                <input type="radio" id="a9" name="q3" value="100">
+                <label for="color3">Never, somebody else will take care of them...</label><br>
+            </div>
+            <button type="button" onclick="submitQuiz()">Submit answers</button>
+        </form>
+        <div class="results" id="results">
+            <h2>Your Result</h2>
+            <p id="resultText"></p>
+        </div>
+        <div>
+            <p>Click on the appropriate value range based on your result:</p>
+            <button onclick = 'window.open("result1.html")'>0</button>
+            <button onclick = 'window.open("result2.html")'>0 - 500</button>
+            <button onclick = 'window.open("result3.html")'>500 - 1.000</button>
+            <button onclick = 'window.open("result4.html")'>1.000 - 3.000</button>
+            <button onclick = 'window.open("result5.html")'>More than 3.000</button>
+        </div>
+        
+    </div>
+    <script>
+        const images = ['tasse_01.png', 'tasse_02.png', 'tasse_03.png', 'tasse_04.png'];
+                const background = document.getElementById('background');
+
+                function createRandomImage() {
+                    const img = document.createElement('img');
+                    const randomImage = images[Math.floor(Math.random() * images.length)];
+                    img.src = randomImage;
+                    img.className = 'bg-image';
+                    img.style.left = `${Math.random() * (window.innerWidth - 100)}px`; // 100 is the width of the image
+                    img.style.top = `${Math.random() * (window.innerHeight - 100)}px`; // 100 is the height of the image
+                    background.appendChild(img);
+                }
+
+                setInterval(createRandomImage, 1000 / 2);
+        
+        function submitQuiz() {
+            var number1 = parseInt(document.querySelector('input[name="q1"]:checked').value);
+            var number2 = parseInt(document.querySelector('input[name="q2"]:checked').value);
+            var number3 = parseInt(document.querySelector('input[name="q3"]:checked').value);
+
+            // Perform a mathematical function on the answers
+            var result = number1 * 26 * number2 * number3 / 100;  // Example: sum of the numbers
+
+            // Display the result
+            var resultText = document.getElementById("resultText");
+            var results = document.getElementById("results");
+            resultText.textContent = "Your approximate Tassenabdruck: " + result;
+
+            results.style.display = "block";
+        }
+  </script>
+</body>
+</html>
