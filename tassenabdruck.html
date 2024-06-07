@@ -6,20 +6,39 @@
     <title>Quiz</title>
     <style>
         @font-face {
+            font-family: 'segoeui';
+            src: url('segoeui.ttf') format('truetype');
+        }
+        
+        @font-face {
+            font-family: 'segoeuib';
+            src: url('segoeuib.ttf') format('truetype');
+        }
+        
+        @font-face {
             font-family: 'Roboto-Regular';
             src: url('Roboto-Regular.ttf') format('truetype');
         }
+        
+        @font-face {
+            font-family: 'segoeuisl';
+            src: url('segoeuisl.ttf') format('truetype');
+        }
+        
         body, html {
-            font-family: 'Roboto-Regular', Arial, sans-serif;
+            font-family: 'segoeui', Arial, sans-serif;
+            font-size: 12pt;
         }
         .quiz-container {
             position: absolute;
-            width: 33%;
-            top: 20px; /* Adjust as needed */
-            left: 20px; /* Adjust as needed */
-            background-color: rgba(255, 255, 255); /* Semi-transparent background */
+            width: 50%;
+            top: 50%; /* Adjust as needed */
+            left: 50%; /* Adjust as needed */
+            background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent background */
             padding: 20px; /* Adjust as needed */
+            border: 20px;
             z-index: 10; /* Ensure it appears on top */
+            transform: translate(-50%, -30%);           
         }
         .question {
             margin-bottom: 20px;
@@ -33,22 +52,54 @@
             position: absolute;
             width: 100px; /* Adjust the size as needed */
             height: 100px; /* Adjust the size as needed */
-            object-fit: cover; 
+            
         }
         
         #background {
             position: relative;
             width: 100%;
-            height: 100%;
+            height: 200%;
             background-color: #000; /* Optional: to see image overlay */
+        }
+        
+        h1 {
+            font-family: 'segoeuisl', Arial, sans-serif;
+            font-size: 36pt;
+            font-weight: normal;
+            margin-bottom: 0;
+        }
+        
+        .color1 {
+            color: #000;
+        }
+        
+        .color2 {
+            color: #FF7F00;
+        }
+        
+        button {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            margin-left: 20px;
+            margin-right: 20px;
+            padding: 25px 50px;
+            font-size: 18px;
+            background-color: #E87401;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'segoeuib', Arial, sans-serif; /* Apply custom font */
         }
     </style>
 </head>
+    
 <body>
     <div id="background"></div>
     <div class="quiz-container">
-        <h1>Cupprint Survey</h1>
+        <h1><span class="color2">Tassenabdruck</span> <span class="color1">Umfrage</span></h1>
           <div>
+                <img src="tassenVerbot.png" width="300" height="300" > 
                 <p>Your Finkenau Mensa Cafe needs you!</p>
                 <p>Lately, we're been having huge problems with the returning of
                 <br>our cups to the Cafe after them being used by the students.</br>
@@ -89,6 +140,7 @@
             <h2>Your Result</h2>
             <p id="resultText"></p>
         </div>
+        <!--
         <div>
             <p>Click on the appropriate value range based on your result:</p>
             <button onclick = 'window.open("result1.html")'>0</button>
@@ -97,23 +149,42 @@
             <button onclick = 'window.open("result4.html")'>1.000 - 3.000</button>
             <button onclick = 'window.open("result5.html")'>More than 3.000</button>
         </div>
-        
+        -->
+
     </div>
+
     <script>
-        const images = ['tasse_01.png', 'tasse_02.png', 'tasse_03.png', 'tasse_04.png'];
-                const background = document.getElementById('background');
+        const images = [
+            'tasse_01.png',
+            'tasse_02.png',
+            'tasse_03.png',
+            'tasse_04.png'
+        ];
+        
+        const background = document.getElementById('background');
 
-                function createRandomImage() {
-                    const img = document.createElement('img');
-                    const randomImage = images[Math.floor(Math.random() * images.length)];
-                    img.src = randomImage;
-                    img.className = 'bg-image';
-                    img.style.left = `${Math.random() * (window.innerWidth - 100)}px`; // 100 is the width of the image
-                    img.style.top = `${Math.random() * (window.innerHeight - 100)}px`; // 100 is the height of the image
-                    background.appendChild(img);
-                }
+        function createRandomImage() {
+            const img = document.createElement('img');
+            const randomImage = images[Math.floor(Math.random() * images.length)];
+            img.src = randomImage;
+            img.className = 'bg-image';
+            
+            img.onload = () => {
+                // Ensure the image is loaded before calculating its position
+                const randomX = Math.random() * (window.innerWidth - img.width);
+                const randomY = Math.random() * window.innerHeight;
 
-                setInterval(createRandomImage, 1000 / 2);
+                img.style.left = `${randomX}px`;
+                img.style.top = `${randomY}px`;
+
+                background.appendChild(img);
+            };
+        }
+
+        // Delay the start of the animation by 10 seconds (10000 milliseconds)
+        setTimeout(() => {
+            setInterval(createRandomImage, 1000 / 2);
+        }, 0);
         
         function submitQuiz() {
             var number1 = parseInt(document.querySelector('input[name="q1"]:checked').value);
@@ -126,10 +197,45 @@
             // Display the result
             var resultText = document.getElementById("resultText");
             var results = document.getElementById("results");
-            resultText.textContent = "Your approximate Tassenabdruck: " + result;
+            var resultDiv = document.getElementById("results");
+            
+            // Clear any existing button
+            var existingButton = document.querySelector('.result-button');
+            if (existingButton) {
+                existingButton.remove();
+            }
+
+            // Create button based on result
+            var button = document.createElement('a');
+            button.className = 'result-button';
+            button.innerText = 'Go to your result';
+            
+            if(result === 0) {
+                resultText.textContent = "Your approximate Tassenabdruck is 0, namely " + result;
+                button.href = 'resultGoldeneTasse.html';
+            }
+            else if(result > 0 && result <= 500) {        
+                resultText.textContent = "Your approximate Tassenabdruck is between 0 and 500, namely " + result;
+                button.href = 'resultFernsehturm.html';
+            }
+            else if(result > 500 && result <= 1000) {        
+                resultText.textContent = "Your approximate Tassenabdruck is between 500 and 1000, namely " + result;
+                button.href = 'resultBrandenburger.html';
+            }
+            else if(result > 1000 && result <= 3000) {        
+                resultText.textContent = "Your approximate Tassenabdruck is between 1000 and 3000, namely " + result;
+                button.href = 'resultElphi.html';
+            }
+            else if(result > 3000) {        
+                resultText.textContent = "Your approximate Tassenabdruck is more than 3000, namely " + result;
+                button.href = 'resultReichstag.html';
+            }
 
             results.style.display = "block";
+            resultDiv.appendChild(button);
+        
         }
   </script>
+
 </body>
 </html>
