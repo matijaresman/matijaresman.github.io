@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Viewer</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'segoeui';
+            src: url('segoeui.ttf') format('truetype');
+        }
+        
+        @font-face {
+            font-family: 'segoeuib';
+            src: url('segoeuib.ttf') format('truetype');
+        }
+        
+        @font-face {
+            font-family: 'Roboto-Regular';
+            src: url('Roboto-Regular.ttf') format('truetype');
+        }
+        
+        @font-face {
+            font-family: 'segoeuisl';
+            src: url('segoeuisl.ttf') format('truetype');
+        }
+        
+        @font-face {
+            font-family: 'segoeuii';
+            src: url('segoeuii.ttf') format('truetype');
+        }
+        
+        body, html {
+            font-family: 'segoeui', Arial, sans-serif;
+            font-size: 14pt;
+            color: #000;
+            height: 100%;
+            width: 90%;
+            margin: 0;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #fff;
+        }
+        
+        model-viewer {
+            width: 90%;
+            max-width: 600px;
+            height: 500px;
+            background-color: #6c757d;
+            opacity: 0.8;
+            
+        }
+        
+        button {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            margin-left: 20px;
+            margin-right: 20px;
+            padding: 25px 50px;
+            font-size: 18px;
+            background-color: #E87401;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'segoeuib', Arial, sans-serif; /* Apply custom font */
+        }
+        
+        h1 {
+            font-family: 'segoeuisl', Arial, sans-serif;
+            font-size: 36pt;
+            font-weight: normal;
+            margin-bottom: 0;
+        }
+        
+        .color1 {
+            color: #000;
+        }
+        
+        .color2 {
+            color: #FF7F00;
+        }
+        
+        .italic {
+            font-family: 'segoeuii', Arial, sans-serif;
+        }
+        
+        .bold {
+            font-weight: bold;
+        }
+        
+    </style>
+  </head>
+  <body>
+    <h1><span class="color1">Dein</span> <span class="color2">Tassenabdruck</span></h1>
+      <p>Glückwunsch, da du einer der wenigen HAW Student*innen bist, der die Mensa Cafe Tassen wirklich zurückbringt! Wir bedanken uns bei dir und verleihen dir als Preis eine <span class="bold">goldene Tasse</span>!
+    </p>
+    <p class = 'italic'>Um die Visualisation von deinem Tassenabdruck ins echte Leben plazieren zu können, klick einfach auf dem Button unter dem Modell.
+    </p>
+    <model-viewer id="model-viewer"
+                  src="goldeneTasse220.glb"
+                  alt="Ein 3D Modell von einer goldenen Finkenau Mensa Cafe Tasse"
+                  ar
+                  auto-rotate
+                  camera-controls
+                  ar-modes="webxr scene-viewer quick-look"
+                  environment-image="neutral">   
+    </model-viewer>
+      
+    <button id="ar-button">Klick hier um dir deine Bauarbeit im echt anzusehen</button>
+    
+    <script>
+        document.getElementById('ar-button').addEventListener('click', () => {
+            const modelViewer = document.getElementById('model-viewer');
+            modelViewer.activateAR();
+        });
+    </script>
+
+  </body>
+</html>
