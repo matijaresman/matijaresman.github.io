@@ -13,6 +13,7 @@
         
         body, html {
             font-family: 'Roboto-Regular', Arial, sans-serif;
+            color: #ffffff;
         }
         
         body {
@@ -21,7 +22,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #000000;
         }
         
         model-viewer {
@@ -33,18 +34,17 @@
   </head>
   <body>
     <h2>Your result:</h2>
+        <br>
     <p>During the period of your planned studies at the HAW, you will have left enough cups to build the Reichstag building!</p>
-    <p>
-        <model-viewer id="model-viewer"
-                      src="reichstag142.3k.glb"
-                      alt="Tasse"
-                      ar
-                      auto-rotate
-                      camera-controls
-                      ar-modes="webxr scene-viewer quick-look"
-                      environment-image="neutral">   
-        </model-viewer>
-    </p>
+    <model-viewer id="model-viewer"
+                  src="reichstag142.3k.glb"
+                  alt="Tasse"
+                  ar
+                  auto-rotate
+                  camera-controls
+                  ar-modes="webxr scene-viewer quick-look"
+                  environment-image="neutral">   
+    </model-viewer>
 
   </body>
 </html>
