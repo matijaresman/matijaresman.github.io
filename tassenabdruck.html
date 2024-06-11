@@ -166,7 +166,7 @@
             'tasse_03.png',
             'tasse_04.png'
         ];
-        
+
         const background = document.getElementById('background');
 
         function createRandomImage() {
@@ -174,13 +174,13 @@
             const randomImage = images[Math.floor(Math.random() * images.length)];
             img.src = randomImage;
             img.className = 'bg-image';
-            
-            img.onload = () => {
-                const randomX = Math.random() * (window.innerWidth - img.width);
-                const randomY = Math.random() * (window.innerHeight - img.height);
 
-                img.style.left = `${randomX}px`;
-                img.style.top = `${randomY}px`;
+            img.onload = () => {
+                const randomX = Math.random() * 100; // Random percentage for X position
+                const randomY = Math.random() * 100; // Random percentage for Y position
+
+                img.style.left = `${randomX}%`;
+                img.style.top = `${randomY}%`;
 
                 background.appendChild(img);
             };
