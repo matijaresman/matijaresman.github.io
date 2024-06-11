@@ -27,7 +27,7 @@
         
         body, html {
             font-family: 'segoeui', Arial, sans-serif;
-            font-size: 12pt;
+            font-size: 14pt;
         }
         .quiz-container {
             position: absolute;
@@ -139,11 +139,11 @@
                 <label for="color3">Nie, darum kümmert sich doch jemand anderer.</label><br>
             </div>
             
-            <button type="button" onclick="submitQuiz()">Submit answers</button>
+            <button type="button" onclick="submitQuiz()">Antworten absenden</button>
         
         </form>
         <div class="results" id="results">
-            <h2>Your Result</h2>
+            <h2>Dein <span class="color2">Tassenabdruck</span></h2>
             <p id="resultText"></p>
         </div>
         <!--
@@ -213,7 +213,7 @@
             // Create button based on result
             var button = document.createElement('a');
             button.className = 'result-button';
-            button.innerText = 'Klicken Sie hier, um Ihr Ergebnis zu sehen';
+            button.innerText = 'Klick hier um dein Ergebnis zu sehen';
             
             if(result === 0) {
                 // resultText.textContent = "Your approximate Tassenabdruck is 0, namely " + result;
