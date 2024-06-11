@@ -43,7 +43,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
         }
         
         body {
@@ -53,6 +52,7 @@
             height: 100vh;
             margin: 0;
             background-color: #fff;
+            width: 50%;
         }
         
         model-viewer {
@@ -107,10 +107,8 @@
   </head>
   <body>
     <h1><span class="color1">Dein</span> <span class="color2">Tassenabdruck</span></h1>
-    <p>Während deiner Studiumzeit lässt du ungefähr genügende Tassen an der Uni um den <span class="bold">Reichstag</span> bauen zu können!
-    </p>
-    <p class = 'italic'>Um die Visualisation von deinem Tassenabdruck ins echte Leben plazieren zu können, klick einfach auf dem Button unter dem Modell.
-    </p>
+    <p>Während deiner Studienzeit lässt du ungefähr genug Tassen an der Uni zurück, um das <span class="bold">Reichstagsgebäude</span> bauen zu können!</p>
+    <p class = 'italic'>Um die Visualisierung deines Tassenabdrucks in die Realität zu übertragen, klicke einfach auf den Button unterhalb des Modells.</p>
     <model-viewer id="model-viewer"
                   src="reichstag142.3k.glb"
                   alt="Ein 3D Modell von dem Reichstag Gebäude gebaut aus dem Finkenau Mensa Cafe Tassen"
@@ -121,7 +119,7 @@
                   environment-image="neutral">   
     </model-viewer>
       
-    <button id="ar-button">Klick hier um dir deine Bauarbeit im echt anzusehen</button>
+    <button id="ar-button">Klicke hier, um dir deine Bauleistung in echt anzusehen</button>
     
     <script>
         document.getElementById('ar-button').addEventListener('click', () => {
