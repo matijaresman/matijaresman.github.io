@@ -38,7 +38,7 @@
             padding: 20px; /* Adjust as needed */
             border: 20px;
             z-index: 10; /* Ensure it appears on top */
-            transform: translate(-40%, -20%);           
+            transform: translate(-50%, -20%);           
         }
         .question {
             margin-bottom: 20px;
@@ -97,44 +97,50 @@
 <body>
     <div id="background"></div>
     <div class="quiz-container">
-        <h1><span class="color2">Tassenabdruck</span> <span class="color1">Umfrage</span></h1>
+        <h1><span class="color2">Tassenabdruck</span>-<span class="color1">Projekt</span></h1>
           <div>
                 <img src="tassenVerbot.png" width="300" height="300" > 
-                <p>Your Finkenau Mensa Cafe needs you!</p>
-                <p>Lately, we're been having huge problems with the returning of
-                <br>our cups to the Cafe after them being used by the students.</br>
-                <br>Take part in the survey and get a chance to win a 3D printed HAW cup!</br>
-                </p>
+                <p>Liebe Student*innen des DMI an der HAW Hamburg,</p>
+                <p>wie den meisten von euch bestimmt schon bewusst ist, hat die Finkenau Mensa bzw. das Café der Finkenau Mensa schon seit einiger Zeit Schwierigkeiten mit der Rückgabe unserer Tassen. Die Tassen werden nämlich regelmäßig an Fensterscheiben, auf Böden und sogar in Toiletten entsorgt. Das bedeutet, dass die Mitarbeiter*innen der Hochschule sich stattdessen darum kümmern müssen. Das <b>Tassenabdruck-Projekt</b> ist daher entstanden, um das Bewusstsein für dieses ekelhafte Problem zu schärfen und hoffentlich die Situation an unserer Hochschule zu verbessern.</p>
+                <p>Wie viele Tassen Studentinnen ungefähr während der gesamten Dauer ihres Studiums an der HAW achtlos hinterlassen, lässt sich durch den sogenannten <b>Tassenabdruck</b> ausdrücken. Um unseren Studentinnen deutlicher zu machen, welchen Einfluss ihre Achtlosigkeit auf das Klima ihrer Hochschule hat, haben wir lebensgroße architektonische 3D-Modelle erstellt, die der Höhe ihres Tassenabdrucks entsprechen. Ihren Tassenabdruck können sie erfahren, indem sie an der kurzen Umfrage unter diesem Text teilnehmen. Um euch die Zahl besser vorstellen zu können, habt ihr die Möglichkeit, mit Hilfe eures Handys das 3D-Modell ins echte Leben zu platzieren.</p>
+                <p>Nehmt bitte an der Umfrage teil und teilt das Projekt mit anderen Student*innen, um uns dabei zu helfen, unsere Umgebung gemeinsam tassenfreier und dadurch hygienischer und ordentlicher zu machen!</p>
           </div>
         <form id="quizForm">
+            
+            <h2><span class="color1">Wie groß ist mein</span> <span class="color2">Tassenabdruck</span>?</h2>
+            
             <div class="question">
-                <p>How many semesters do you plan to study at the HAW?</p>
+                <p>Wie viele Semester planst du an der HAW zu studieren?</p>
                 <input type="radio" id="a1" name="q1" value="3">
                 <label for="animal1">1 - 3</label><br>
                 <input type="radio" id="a2" name="q1" value="7">
                 <label for="animal2">4 - 7</label><br>
                 <input type="radio" id="a3" name="q1" value="12">
-                <label for="animal3">More than 7</label><br>
+                <label for="animal3">Mehr als 7</label><br>
             </div>
+            
             <div class="question">
-                <p>How many hot bevarages do you buy on average per week at the Finkenau Mensa Cafe?</p>
+                <p>Wie viele Heißgetränke kaufst du durchschnittlich pro Woche im Café der Finkenau Mensa?</p>
                 <input type="radio" id="a4" name="q2" value="2">
                 <label for="color1">0 - 2</label><br>
                 <input type="radio" id="a5" name="q2" value="5">
                 <label for="color2">3 - 5</label><br>
                 <input type="radio" id="a6" name="q2" value="12">
-                <label for="color3">More than 5</label><br>
+                <label for="color3">Mehr als 5</label><br>
             </div>
+            
             <div class="question">
-                <p>How often do you return your used cups to the Mensa Cafe?</p>
+                <p>Wie oft gibst du deine benutzten Tassen im Café der Mensa zurück?</p>
                 <input type="radio" id="a7" name="q3" value="0">
-                <label for="color1">Always!</label><br>
+                <label for="color1">Immer!</label><br>
                 <input type="radio" id="a8" name="q3" value="80">
-                <label for="color2">Whenever I feel like it, I guess.</label><br>
+                <label for="color2">Wann auch immer mir danach ist...</label><br>
                 <input type="radio" id="a9" name="q3" value="100">
-                <label for="color3">Never, somebody else will take care of them...</label><br>
+                <label for="color3">Nie, darum kümmert sich doch jemand anderer.</label><br>
             </div>
+            
             <button type="button" onclick="submitQuiz()">Submit answers</button>
+        
         </form>
         <div class="results" id="results">
             <h2>Your Result</h2>
@@ -170,7 +176,6 @@
             img.className = 'bg-image';
             
             img.onload = () => {
-                // Ensure the image is loaded before calculating its position
                 const randomX = Math.random() * (window.innerWidth - img.width);
                 const randomY = Math.random() * window.innerHeight;
 
@@ -184,7 +189,7 @@
         // Delay the start of the animation by 10 seconds (10000 milliseconds)
         setTimeout(() => {
             setInterval(createRandomImage, 1000 / 2);
-        }, 0);
+        }, 20000);
         
         function submitQuiz() {
             var number1 = parseInt(document.querySelector('input[name="q1"]:checked').value);
@@ -208,7 +213,7 @@
             // Create button based on result
             var button = document.createElement('a');
             button.className = 'result-button';
-            button.innerText = 'Go to your result';
+            button.innerText = 'Klicken Sie hier, um Ihr Ergebnis zu sehen';
             
             if(result === 0) {
                 resultText.textContent = "Your approximate Tassenabdruck is 0, namely " + result;
@@ -222,11 +227,11 @@
                 resultText.textContent = "Your approximate Tassenabdruck is between 500 and 1000, namely " + result;
                 button.href = 'resultBrandenburger.html';
             }
-            else if(result > 1000 && result <= 3000) {        
+            else if(result > 1000 && result <= 2990) {        
                 resultText.textContent = "Your approximate Tassenabdruck is between 1000 and 3000, namely " + result;
                 button.href = 'resultElphi.html';
             }
-            else if(result > 3000) {        
+            else if(result > 2990) {        
                 resultText.textContent = "Your approximate Tassenabdruck is more than 3000, namely " + result;
                 button.href = 'resultReichstag.html';
             }
