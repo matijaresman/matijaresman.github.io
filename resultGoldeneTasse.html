@@ -43,7 +43,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
         }
         
         body {
@@ -53,6 +52,7 @@
             height: 100vh;
             margin: 0;
             background-color: #fff;
+            width: 50%;
         }
         
         model-viewer {
@@ -106,13 +106,12 @@
   </head>
   <body>
     <h1><span class="color1">Dein</span> <span class="color2">Tassenabdruck</span></h1>
-      <p>Glückwunsch, da du einer der wenigen HAW Student*innen bist, der die Mensa Cafe Tassen wirklich zurückbringt! Wir bedanken uns bei dir und verleihen dir als Preis eine <span class="bold">goldene Tasse</span>!
+      <p>Glückwunsch! Du bist einer der wenigen HAW-Student*innen, der die Tassen des Mensa-Cafés tatsächlich zurückbringt! Wir bedanken uns bei dir und verleihen dir als Auszeichnung eine <span class="bold">goldene Tasse</span>!
     </p>
-    <p class = 'italic'>Um die Visualisation von deinem Tassenabdruck ins echte Leben plazieren zu können, klick einfach auf dem Button unter dem Modell.
-    </p>
+    <p class = 'italic'>Um die Visualisierung deines Tassenabdrucks in die Realität zu übertragen, klicke einfach auf den Button unterhalb des Modells.</p>
     <model-viewer id="model-viewer"
                   src="goldeneTasse800.glb"
-                  alt="Ein 3D Modell von einer goldenen Finkenau Mensa Cafe Tasse"
+                  alt="Ein 3D Modell von einer goldenen Finkenau Mensa-Cafe Tasse"
                   ar
                   auto-rotate
                   camera-controls
@@ -120,7 +119,7 @@
                   environment-image="neutral">   
     </model-viewer>
       
-    <button id="ar-button">Klick hier um dir deine Bauarbeit im echt anzusehen</button>
+    <button id="ar-button">Klicke hier, um dir deine Auszeichnung in echt anzusehen</button>
     
     <script>
         document.getElementById('ar-button').addEventListener('click', () => {
