@@ -55,11 +55,14 @@
         }
         
         #background {
-            position: relative;
-            width: 80vw; /* Set width to 100% of the viewport width */
-            height: 100vh; /* Set height to 100% of the viewport height */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 100vh; /* Ensure background covers at least the viewport height */
             background-color: #fff; /* Optional: to see image overlay */
-            min-height: 95%
+            overflow: hidden; /* Prevent scrollbars */
         }
         
         h1 {
