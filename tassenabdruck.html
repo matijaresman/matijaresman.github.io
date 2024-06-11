@@ -176,8 +176,8 @@
             img.className = 'bg-image';
             
             img.onload = () => {
-                const randomX = Math.random() * (window.pageWidth - img.width);
-                const randomY = Math.random() * window.pageHeight;
+                const randomX = Math.random() * (window.innerWidth - img.width);
+                const randomY = Math.random() * (window.innerHeight - img.height);
 
                 img.style.left = `${randomX}px`;
                 img.style.top = `${randomY}px`;
