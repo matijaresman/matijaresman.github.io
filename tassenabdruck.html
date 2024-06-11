@@ -216,23 +216,19 @@
             button.innerText = 'Klicken Sie hier, um Ihr Ergebnis zu sehen';
             
             if(result === 0) {
-                resultText.textContent = "Your approximate Tassenabdruck is 0, namely " + result;
+                // resultText.textContent = "Your approximate Tassenabdruck is 0, namely " + result;
                 button.href = 'resultGoldeneTasse.html';
             }
-            else if(result > 0 && result <= 500) {        
-                resultText.textContent = "Your approximate Tassenabdruck is between 0 and 500, namely " + result;
+            else if(result > 0 && result <= 1000) {        
+                // resultText.textContent = "Your approximate Tassenabdruck is between 0 and 500, namely " + result;
                 button.href = 'resultFernsehturm.html';
             }
-            else if(result > 500 && result <= 1000) {        
-                resultText.textContent = "Your approximate Tassenabdruck is between 500 and 1000, namely " + result;
+            else if(result > 1000 && result <= 2500) {        
+                // resultText.textContent = "Your approximate Tassenabdruck is between 500 and 1000, namely " + result;
                 button.href = 'resultBrandenburger.html';
             }
-            else if(result > 1000 && result <= 2990) {        
-                resultText.textContent = "Your approximate Tassenabdruck is between 1000 and 3000, namely " + result;
-                button.href = 'resultElphi.html';
-            }
-            else if(result > 2990) {        
-                resultText.textContent = "Your approximate Tassenabdruck is more than 3000, namely " + result;
+            else if(result > 2500) {        
+                // resultText.textContent = "Your approximate Tassenabdruck is more than 3000, namely " + result;
                 button.href = 'resultReichstag.html';
             }
 
