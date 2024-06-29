@@ -5,10 +5,10 @@ let fontPath;
 let input;
 let updateButton;
 let outline = 1;
-let strokeWeightInput;
-let noiseScaleInput;
-let noiseStrengthInput;
-let fontSizeInput;
+let strokeWeightInput = 1;
+let noiseScaleInput = 0.5;
+let noiseStrengthInput = 50;
+let fontSizeInput = 144;
 
 document.addEventListener("DOMContentLoaded", function() {
   const form = document.getElementById("myForm");
