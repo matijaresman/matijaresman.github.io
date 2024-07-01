@@ -4,7 +4,7 @@ let msg;
 let fontPath;
 
 function setup() {
-  let canvas = createCanvas(400, 400);
+  let canvas = createCanvas(800, 400);
   canvas.parent('canvas-container');
 
   opentype.load('./Fanwood.otf', function (err, f) {
