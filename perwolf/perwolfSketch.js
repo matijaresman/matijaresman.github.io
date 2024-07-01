@@ -6,6 +6,21 @@ var diameter = 50;
 function setup() {
   let canvas = createCanvas(400, 400);
   canvas.parent('canvas-container');
+
+  opentype.load('./Fanwood.otf', function (err, f) {
+    if (err) {
+      alert('Font could not be loaded: ' + err);
+    } else {
+      font = f;
+      console.log('font ready');
+      fSize = 144;
+      msg = 'PERWOLF';
+      let x = 50;
+      let y = 160;
+      fontPath = font.getPath(msg, x, y, fSize);
+      console.log(fontPath.commands);
+    }
+  });
 }
 
 function draw() {
