@@ -1,7 +1,7 @@
-var x = 75, y = 0;
-var vx = 3, vy = 3;
-var r = 0, g = 0, b = 0;
-var diameter = 50;
+let font;
+let fSize;
+let msg;
+let fontPath;
 
 function setup() {
   let canvas = createCanvas(400, 400);
@@ -24,28 +24,44 @@ function setup() {
 }
 
 function draw() {
-  background(220);
-  fill(r, g, b);
-  circle(x, y, diameter);
-  
-  if (x > width || x < 0) {
-    vx *= -1;
-    changeColor();
+  clear();
+  if (!font) return;
+  background(255);
+  noFill();
+  stroke(0);
+  strokeWeight(2);
+
+  for (let cmd of fontPath.commands) {
+    if (cmd.type === 'M') {
+      beginShape();
+      let pt = distort(cmd.x, cmd.y);
+      vertex(pt.x, pt.y);
+    } else if (cmd.type === 'L') {
+      let pt = distort(cmd.x, cmd.y);
+      vertex(pt.x, pt.y);
+    } else if (cmd.type === 'C') {
+      let pt1 = distort(cmd.x1, cmd.y1);
+      let pt2 = distort(cmd.x2, cmd.y2);
+      let pt3 = distort(cmd.x, cmd.y);
+      bezierVertex(pt1.x, pt1.y, pt2.x, pt2.y, pt3.x, pt3.y);
+    } else if (cmd.type === 'Q') {
+      let pt1 = distort(cmd.x1, cmd.y1);
+      let pt2 = distort(cmd.x, cmd.y);
+      quadraticVertex(pt1.x, pt1.y, pt2.x, pt2.y);
+    } else if (cmd.type === 'Z') {
+      endShape(CLOSE);
+    }
   }
-  
-  if (y > height || y < 0) {
-    vy *= -1;
-    changeColor();
-  }
-  
-  x += vx;
-  y += vy;
+  noLoop();
 }
 
-function changeColor() {
-  r = random(255);
-  g = random(255);
-  b = random(255);
+function distort(x, y) {
+  let noiseScale = 0.25;
+  let noiseStrength = 50;
+  let nx = x + (noise(x * noiseScale, y * noiseScale) - 0.5) * noiseStrength;
+  let ny = y + (noise(x * noiseScale + 10000, y * noiseScale + 
+                      10000) - 0.5) * noiseStrength;
+  return { x: nx, y: ny };
 }
 
 document.addEventListener("DOMContentLoaded", function() {
