@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>perWolf</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+    
+    <script src="https://unpkg.com/p5.js-svg@1.1.0/dist/p5.svg.min.js"></script>
+    
+    <link rel="stylesheet" href="perwolfSeiteStyle.css">
+    
+</head>
+<body>
+    <div class="container">
+        <div class="item item-1">
+            Perwolf: a noisy type design project
+        </div>
+        <div class="item item-2">
+            <div id="canvas-container"></div>
+        </div>
+        <div class="item item-3">
+            <div class="subcontainer">
+                <div class="subitem item-3-1">
+                    <form id="myForm">
+                        
+                        <!--
+                        <label for="fU">Upload OTF font file</label>
+                        <input type="file" value="./Fanwood.otf">
+                        -->
+                        <label for="fU">Upload OTF Font:</label>
+                        <input type="file" id="fU" name="fU" accept=".otf">
+                        <br>
+                        <label for="tx">Write your text:</label>
+                        <input type="text" id="tx" name="tx" value="Your text here">
+                        <br>
+                        <label for="fS">Font size:</label>
+                        <input type="number" id="fS" name="fS" min="1" max="400" step="1" value="144">
+                        <br>
+                        <label for="quantity">Stroke thickness:</label>
+                        <input type="number" id="sT" name="sT" min="0" max="100" step="0.5" value="1">
+                        <br>
+                        <label for="quantity">Noise scale:</label>
+                        <input type="number" id="nSc" name="nSc" min="0" max="400" step="0.5" value="0.5">
+                        <br>
+                        <label for="quantity">Noise strength:</label>
+                        <input type="number" id="nSt" name="nSt" min="0" max="400" step="1" value="50">
+                        <br>
+                        <input type="submit" value="Update text">
+                        <br>
+                        <button id="sB" >Save SVG</button>
+                    </form>
+                    <p id="output"></p>
+                </div>
+                <div class="subitem item-3-2">
+                    About Perwolf
+                    <br><br>
+                    This tool allows you to apply a Perlin noise texture to the outline of your text in the desired OpenType font and download the result as a Scalable Vector Graphics object for further use. Inspired by the randomfont FF Beowolf created by Erik van Blokland and Just van Rossum in 1990.
+                    <br><br>The javascript code uses the p5.js, opentype.min.js and p5.svg.min.js libraries. The default font as well as the display font is Fanwood Regular by Barry Schwartz.
+                    <br><br>Created by Matija Resman with the guidance of Prof. Pierre Pané-Farré and Simon Thiefes as a semester project for the Co-Op Monday course at HAW Hamburg in 2024.
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="perwolfSketch_update.js"></script>
+</body>
+</html>
