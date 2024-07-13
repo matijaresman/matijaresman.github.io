@@ -8,7 +8,7 @@ let noiseStrength = 50;
 let svgCanvas;
 
 function setup() {
-    let canvas = createCanvas(800, 500, SVG);
+    let canvas = createCanvas(800, 500);
     canvas.parent('canvas-container');
     loadDefaultFont();
 }
@@ -92,7 +92,6 @@ function updateFontPath() {
 }
 
 function saveIMG() {
-  clear();
   svgCanvas.clear();
   svgCanvas.noFill();
   svgCanvas.stroke(0);
