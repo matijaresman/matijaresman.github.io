@@ -21,7 +21,7 @@
     text-align: center; /* Centered text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Get the element to line up correctly */
-    font-family: "Fanwood";
+    font-family: "Roboto";
     font-size: 1.1em; /* Increase font size */
     word-spacing: 2px;
     letter-spacing: 1px;
@@ -43,7 +43,7 @@
     text-align: center; /* Centered text */
     text-decoration: none; /* Remove underline */
     display: inline-block; /* Get the element to line up correctly */
-    font-family: "Fanwood";
+    font-family: "Roboto";
     font-size: 1.1em; /* Increase font size */
     word-spacing: 2px;
     letter-spacing: 1px;
@@ -58,7 +58,7 @@
 
 /* Basic styling for the input field */
 .styled-input {
-    font-family: "Fanwood";
+    font-family: "Roboto";
     width: 100%; /* Full width */
     padding: 8px; /* Some padding */
     margin: 4px 0; /* Some margin */
@@ -147,14 +147,14 @@ input[type=range]::-moz-range-thumb {
 }
 
 body {
-    font-size: 1em;
+    font-size: 0.9em;
     margin: 0;
     padding: 0;
-    line-height: 1;
+    line-height: 1.1;
     letter-spacing: 0.9px;
     word-spacing: 1.2px;
-    font-weight: 600;
-    font-family: "Fanwood";
+    font-weight: 400;
+    font-family: "Roboto";
     display: flex;
     justify-content: center;
     align-items: center;
