@@ -1,0 +1,191 @@
+/* BASE STYLES */
+:root {
+    --clr-dark: black;
+    --clr-light: white;
+    --clr-accent: #e11d48;
+    --sidebar--width: 300px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Style for the buttons */
+.styled-button {
+    background-color: #DB3EB1; /* Green background */
+    border: none; /* Remove borders */
+    color: whitesmoke; /* White text */
+    padding: 4px; /* Some padding */
+    text-align: center; /* Centered text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Get the element to line up correctly */
+    font-family: "Fanwood";
+    font-size: 1.1em; /* Increase font size */
+    word-spacing: 2px;
+    letter-spacing: 1px;
+    cursor: pointer; /* Add a pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Add a transition effect */
+}
+
+/* Add a hover effect for buttons */
+.styled-button:hover {
+    background-color: #4D4DFF; /* Darker green background */
+}
+
+/* Basic styling for the input field */
+.styled-input {
+    font-family: "Fanwood";
+    width: 100%; /* Full width */
+    padding: 8px; /* Some padding */
+    margin: 4px 0; /* Some margin */
+    box-sizing: border-box; /* Make sure padding and border are included in the element's total width and height */
+    font-size: 14px; /* Font size */
+    border: 2px solid #4D4DFF; /* Light grey border */
+    outline: none; /* Remove default outline on focus */
+}
+
+/* Change the color of the blinking caret */
+.styled-input::placeholder {
+    color: #4D4DFF; /* Placeholder text color */
+}
+
+.styled-input:focus {
+    border-color: #DB3EB1; /* Change border color on focus */
+    caret-color: #4D4DFF; /* Change caret color on focus */
+}
+
+/* Change the caret color */
+.styled-input {
+    caret-color: #4D4DFF; /* Default caret color */
+}
+
+/* Scrollbar styles for WebKit browsers */
+::-webkit-scrollbar {
+    width: 12px; /* Width of the entire scrollbar */
+    height: 12px; /* Height of the horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Color of the track */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #DB3EB1; /* Color of the thumb */
+    border: 3px solid #f1f1f1; /* Space around thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #4D4DFF; /* Color of the thumb when hovered */
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #DB3EB1;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    margin-bottom: 10px;
+}
+
+input[type=range]:hover {
+    opacity: 1;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 10px;
+    background: #4D4DFF;
+    cursor: pointer;
+    border-radius: 0%;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+input[type=range]::-moz-range-thumb {
+    width: 30px;
+    height: 30px;
+    background: #DB3EB1;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+
+@font-face {
+    font-family: 'Fanwood';
+    src: url('Fanwood.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-size: 1em;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    letter-spacing: 0.9px;
+    word-spacing: 1.2px;
+    font-weight: 600;
+    font-family: "Fanwood";
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 100vw;
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    padding: 1em;
+}
+
+.sidebar {
+    background-color: #44D62C;
+    text-align: center;
+    padding: 0.5em;
+    border-radius: 0px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    position: relative;
+    flex: 0 0 var(--sidebar--width);
+    align-content: flex-start;
+    height: 90vh;
+    width: 280px;
+    position: fixed;
+    overflow-y: auto;
+}
+
+.sidebar_section {
+    align-content: flex-start;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /*
+    border: 1px solid black;
+    */
+    padding: 0 4px 10px 4px;
+    border-bottom: 2px;
+    border-bottom-color: black;
+}
+
+.canvas {
+    margin-left: var(--sidebar--width);
+    flex: 1;
+    max-height: 100vh;
+}
+
+output {
+    text-align: center;
+    font-weight: bold;
+    color: #4D4DFF;
+}
