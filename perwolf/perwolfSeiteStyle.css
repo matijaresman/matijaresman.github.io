@@ -1,0 +1,328 @@
+:root {
+    --clr-dark: black;
+    --clr-light: white;
+    --clr-accent: #e11d48;
+    --sidebar--height: 22vh;
+    --about--height: 32px;
+}
+
+@font-face {
+    font-family: 'FragmentMono';
+    src: url('./FragmentMono-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.styled-button {
+    width: 100px;
+    height: 44px;
+    background-color: #DB3EB1;
+    border: none;
+    color: black;
+    padding: 4px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1em;
+    letter-spacing: 0.7px;
+    word-spacing: 1.4px;
+    font-weight: 650;
+    font-family: "FragmentMono";
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-radius: 2px;
+}
+
+.styled-button:hover {
+    background-color: black;
+    color: white;
+}
+
+.about-button {
+    font-size: 1em;
+    letter-spacing: 0.7px;
+    word-spacing: 1.4px;
+    font-weight: 650;
+    font-family: "FragmentMono";
+    width: 100px;
+    height: 44px;
+    background-color: rgba(77,77,255);
+    border: none;
+    color: black;
+    padding: 4px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-radius: 2px;
+}
+
+.about-button:hover {
+    background-color: black;
+    color: white;
+}
+
+.styled-input {
+    font-family: "Roboto";
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 1.2em;
+    padding: 2px;
+}
+
+.styled-fontinput {
+    text-align: left;
+    font-family: "FragmentMono";
+    width: 100%;
+    padding: 2px;
+    margin: 4px 0;
+    box-sizing: border-box;
+    font-size: 14px;
+    outline: none;
+}
+
+.styled-input::placeholder {
+    color: #DDB13E;
+}
+
+.styled-input:focus {
+    caret-color: black;
+}
+
+.styled-input {
+    caret-color: black;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Color of the track */
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #DB3EB1; /* Color of the thumb */
+    border: 3px solid #f1f1f1; /* Space around thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: black; /* Color of the thumb when hovered */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px; /* Add some margin between form groups */
+}
+
+.label-output {
+    display: flex;
+    justify-content: space-between; /* Distribute space between label and output */
+    align-items: center; /* Vertically center the label and output */
+    margin-bottom: 10px; /* Add some space between label-output and slider */
+}
+
+.label-output label {
+    margin-right: 10px; /* Add space between the label and the output */
+    min-width: 200px; /* Ensure labels have a minimum width */
+    text-align: left; /* Align text to the left */
+}
+
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%; /* Ensure slider takes full width of its container */
+    height: 3px;
+    background: #DB3EB1;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    margin-bottom: 10px;
+}
+
+input[type=range]:hover {
+    opacity: 1;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 12px;
+    background: rgba(77,77,255);
+    cursor: pointer;
+    border-radius: 2px;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+input[type=range]::-moz-range-thumb {
+    width: 30px;
+    height: 30px;
+    background: #DB3EB1;
+    cursor: pointer;
+    border-radius: 2px;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
+
+
+@font-face {
+    font-family: 'Fanwood';
+    src: url('Fanwood.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-size: 0.7em;
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+    letter-spacing: 0.7px;
+    word-spacing: 1.4px;
+    font-weight: 650;
+    font-family: "FragmentMono";
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 100vw;
+    height: 100vh;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column; /* Changed to column to stack sidebar and canvas vertically */
+    padding: 1em;
+    align-content: center;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+/* Common styles for both sidebars */
+.sidebar, .sidebar-about {
+    text-align: center;
+    border-radius: 4px;
+    display: flex;
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 0;
+    overflow-x: auto;
+}
+
+/* Specific styles for .sidebar */
+.sidebar {
+    flex-direction: row;
+    margin-bottom: 4vh;
+    background-color: rgba(68,214,44, 0.8);
+    height: var(--sidebar--height);
+    width:75vw;
+    bottom: 0;
+    left: 12.5%; /* Adjust the positioning */
+    z-index: 1; /* Ensure it's below .sidebar-about */
+}
+
+/* Specific styles for .sidebar-about */
+.sidebar-about {
+    flex-direction: column;
+    margin-bottom: 5vh;
+    height: var(--about--height);
+    width: var(--sidebar--height);
+    padding-left: 10px;
+    left: calc(10% + 85vw); /* Adjust the positioning to the right of .sidebar */
+    z-index: 2; /* Ensure it's above .sidebar */
+    justify-content: flex-start;
+}
+.sidebar_section {
+    display: flex;
+    flex-direction: column; /* Align children vertically */
+    align-items: center; /* Center align children horizontally */
+    justify-content: center; /* Center align children vertically */
+    padding: 10px;
+    border-bottom: 2px;
+    border-bottom-color: black;
+    flex: 1;
+    box-sizing: border-box; /* Ensure padding is included in the height calculation */
+}
+
+.sidebar_sectionLogo {
+    display: flex;
+    flex-direction: column; /* Align children vertically */
+    align-items: center; /* Center align children horizontally */
+    justify-content: center; /* Center align children vertically */
+    padding: 0 40px 10px 10px;
+    border-bottom: 2px;
+    border-bottom-color: black;
+    box-sizing: border-box; /* Ensure padding is included in the height calculation */
+}
+
+.sidebar_sectionButtons {
+    display: flex;
+    flex-direction: column; /* Align children vertically */
+    align-items: center; /* Center align children horizontally */
+    justify-content: center; /* Center align children vertically */
+    padding: 0 20px 10px 50px;
+    border-bottom: 2px;
+    border-bottom-color: black;
+    box-sizing: border-box; /* Ensure padding is included in the height calculation */
+}
+
+.canvas {
+    flex: 1;
+    max-height: calc(100vh - var(--sidebar--height)); /* Adjust to take remaining height */
+    margin-bottom: var(--sidebar--height); /* Ensure it doesn't overlap the sidebar */
+}
+
+output {
+    min-width: 40px; /* Set a fixed width for the output */
+    text-align: right; /* Align text to the right */
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(6px);
+    z-index: 3;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding: 14vh;
+}
+
+.popup-content {
+    font-size: 1.45em;
+    font-family: 'FragmentMono';
+    color: black;
+    font-weight: 800;
+    width: 100%;
+    max-width: 100vw;
+    text-align: left;
+    
+}
+
+.close-btn {
+    color: black;
+    float: right;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: black;
+}
