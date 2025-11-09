@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src = "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.js"></script>
+    <script src = "https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+    <script src = "https://unpkg.com/p5.js-svg@1.5.1"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="utf-8" />
+    
+  </head>
+  <body>
+    <main>
+      <div id="menu">
 
+        <div class="control">
+          <label for="letterSelect">Letter</label>
+          <select id="letterSelect">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="G">G</option>
+            <option value="H">H</option>
+            <option value="I">I</option>
+            <option value="J">J</option>
+            <option value="K">K</option>
+            <option value="L">L</option>
+            <option value="M">M</option>
+            <option value="N">N</option>
+            <option value="O">O</option>
+            <option value="P">P</option>
+            <option value="Q">Q</option>
+            <option value="R">R</option>
+            <option value="S">S</option>
+            <option value="T">T</option>
+            <option value="U">U</option>
+            <option value="V">V</option>
+            <option value="W">W</option>
+            <option value="X">X</option>
+            <option value="Y">Y</option>
+            <option value="Z">Z</option>
+          </select>
+        </div>
+      
+        <div class="control">
+          <label for="fillColor">Fill</label>
+          <input id="fillColor" type="color" value="#000000" />
+        </div>
+      
+        <div class="control">
+          <label for="strokeColor">Outline</label>
+          <input id="strokeColor" type="color" value="#000000" />
+        </div>
+
+        <div class="control">
+          <label for="strokeWidthSlider">Outline weight<span id="strokeWidthValue">8</span></label>
+          <input type="range" id="strokeWidthSlider" min="0" max="10" step="1" value="1">
+        </div>
+      
+        <div class="control">
+          <label for="stickSlider">Branchiness
+            <span id="stickValue">0.2</span>
+          </label>
+          <input type="range" id="stickSlider" min="0.1" max="1" step="0.1" value="0.1">
+        </div>
+      
+        <div class="control">
+          <label for="maxPointsSlider">Growth Limit
+            <span id="maxPointsValue">1020</span>
+          </label>
+          <input type="range" id="maxPointsSlider" min="100" max="1000" step="10" value="1020">
+        </div>
+      
+        <div class="control">
+          <button id="submitButton">Generate</button>
+          <button id="saveButton">Save SVG</button>
+        </div>
+      
+      </div>
+      
+  <div id="canvasContainer"></div>
+      <script src="sketch.js"></script>
+    </main>
+  </body>
+</html>
