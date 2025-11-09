@@ -118,3 +118,16 @@ input, select, button, textarea {
   font-family: 'Consola', monospace;
   font-size: 0.9rem;
 }
+
+#menu button,
+#menu input[type="range"],
+#menu select {
+  width: 140px; /* adjust this as you like */
+  min-width: 140px;
+  box-sizing: border-box;
+}
+
+#menu input[type="color"] {
+  width: 40px;
+  min-width: 40px;
+}
