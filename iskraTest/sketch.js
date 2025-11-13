@@ -6,7 +6,7 @@ let backgroundCol = '#FF8939';
 let starCol = '#FF3B32';
 let textCol = '#BD2EFF';
 
-let saveBtn;
+let saveBtn; // button reference
 
 function star(x, y, radius1, radius2, npoints) {
   let angle = TWO_PI / npoints;
@@ -24,25 +24,24 @@ function star(x, y, radius1, radius2, npoints) {
 }
 
 function setup() {
-  // Create canvas and center it using CSS
+  // Create canvas and attach to a container
   let cnv = createCanvas(1920, 1080);
-  cnv.parent('canvas-container'); // attach canvas to our HTML div
-  frameRate(fps);
+  cnv.parent('canvas-container');
+  frameRate(10);
 
-  video = createVideo('/assets/iskra_test.mp4', () => {
-    video.hide();
-  });
+  video = createCapture(VIDEO, {flipped: true});
+  video.size(32, 16);
+  video.hide();
 
-  // Create a centered "Save" button below the canvas
+  // Create Save button below canvas
   saveBtn = createButton('💾 Save Current Frame');
   saveBtn.parent('canvas-container');
   saveBtn.mousePressed(() => {
-    saveCanvas('frame_' + nf(frameCount, 3), 'png');
+    saveCanvas('video_frame', 'png');
   });
 }
 
 function draw() {
-  frameRate(10);
   background(backgroundCol);
 
   let w = width / video.width;
@@ -52,51 +51,39 @@ function draw() {
 
   for (let i = 0; i < video.width; i++) {
     for (let j = 0; j < video.height; j++) {
-      //The original array of indexes
       let pixelIndex = (i + j * video.width) * 4;
-      let arrayIndex = (i + j * video.width);
-      //console.log(arrayIndex);
-      let avg = [];
-      let avgNew = [];
       let r = video.pixels[pixelIndex + 0];
       let g = video.pixels[pixelIndex + 1];
       let b = video.pixels[pixelIndex + 2];
-      //The avg values are not saved into an array!
-      //But rather used immediately
-      
-      //The pixels are now in the avg array!
-      avg[arrayIndex] = (r + g + b) / 3;
-      let arrayIndexNew = arrayIndex;
-      avgNew[arrayIndex] = avg[arrayIndexNew];
+      let avg = (r + g + b) / 3;
+
       push();
-      translate(-starRad2/2, 0);
-      if(j % 2 == 1) {
+      translate(-starRad2 / 2, 0);
+      if (j % 2 == 1) {
         translate(starRad2, 0);
       }
-      if(avgNew[arrayIndex] < 155) {
+
+      if (avg < 155) {
         fill(starCol);
-        //stroke(0.5 * sin(frameCount * 0.1));
-        star(i * w + starRad2, j * h + starRad2, starRad1 * (sin(frameCount * 0.15) + 0.25), starRad2 * (sin(frameCount * 0.15) + 0.25), 4);
-      } else if (avgNew[arrayIndex] > 155 && avgNew[arrayIndex] < 200){
+        star(
+          i * w + starRad2,
+          j * h + starRad2,
+          starRad1 * (sin(frameCount * 0.15) + 0.25),
+          starRad2 * (sin(frameCount * 0.15) + 0.25),
+          4
+        );
+      } else if (avg >= 155 && avg < 200) {
         fill(textCol);
-        //stroke(1 * sin(frameCount * 0.05));
-        star(i * w + starRad2, j * h + starRad2, 2 * starRad1 * sin(frameCount * 0.05), 2 * starRad2 * sin(frameCount * 0.05), 9);
+        star(
+          i * w + starRad2,
+          j * h + starRad2,
+          2 * starRad1 * sin(frameCount * 0.05),
+          2 * starRad2 * sin(frameCount * 0.05),
+          9
+        );
       }
       pop();
       noStroke();
-      //Save all the avg values into an array, together with the coordinates
-      //Create new array for saving the "randomized" rectangles
-      //You need a separate function for drawing gradients!
-      
-      //image(video, 0, 0);
-      
     }
-  }
-}
-
-
-function keyPressed() {
-  if (key === 's' || key === 'S') {
-    saveCanvas('video_frame', 'png');
   }
 }
