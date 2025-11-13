@@ -6,6 +6,8 @@ let backgroundCol = '#FF8939';
 let starCol = '#FF3B32';
 let textCol = '#BD2EFF';
 
+let saveBtn;
+
 function star(x, y, radius1, radius2, npoints) {
   let angle = TWO_PI / npoints;
   let halfAngle = angle / 2.0;
@@ -22,11 +24,21 @@ function star(x, y, radius1, radius2, npoints) {
 }
 
 function setup() {
-  createCanvas(1920, 1080);
-  video = createCapture(VIDEO, {flipped: true});
-  video.size(32, 16);
-  //video.hide();
-  
+  // Create canvas and center it using CSS
+  let cnv = createCanvas(1920, 1080);
+  cnv.parent('canvas-container'); // attach canvas to our HTML div
+  frameRate(fps);
+
+  video = createVideo('/assets/iskra_test.mp4', () => {
+    video.hide();
+  });
+
+  // Create a centered "Save" button below the canvas
+  saveBtn = createButton('💾 Save Current Frame');
+  saveBtn.parent('canvas-container');
+  saveBtn.mousePressed(() => {
+    saveCanvas('frame_' + nf(frameCount, 3), 'png');
+  });
 }
 
 function draw() {
