@@ -1,29 +1,35 @@
-    body {
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start; /* align items to top so button is visible */
-      flex-direction: column;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-    }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #111;
+}
 
-    #canvas-container {
-      text-align: center;
-    }
+#container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #444;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-    }
+canvas {
+  display: block;
+}
 
-    button:hover {
-      background-color: #666;
-    }
+button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #444;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #666;
+}
