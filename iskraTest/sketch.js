@@ -2,11 +2,13 @@ let video;
 let starRad1 = 10;
 let starRad2 = 30;
 
+// Default colors
 let backgroundCol = '#FF8939';
 let starCol = '#FF3B32';
 let textCol = '#BD2EFF';
 
 let saveBtn;
+let bgPicker, starPicker, textPicker;
 
 function star(x, y, radius1, radius2, npoints) {
   let angle = TWO_PI / npoints;
@@ -24,7 +26,6 @@ function star(x, y, radius1, radius2, npoints) {
 }
 
 function setup() {
-  // Create canvas and attach to a container
   let cnv = createCanvas(1920, 1080);
   cnv.parent('canvas-container');
   frameRate(10);
@@ -33,12 +34,34 @@ function setup() {
   video.size(32, 16);
   video.hide();
 
-  // Create Save button below canvas
+  // Color picker container
+  const colorContainer = createDiv();
+  colorContainer.parent('canvas-container');
+  colorContainer.style('display', 'flex');
+  colorContainer.style('justify-content', 'center');
+  colorContainer.style('gap', '10px');
+  colorContainer.style('margin-top', '10px');
+
+  // Background color
+  bgPicker = createColorPicker(backgroundCol);
+  bgPicker.parent(colorContainer);
+  bgPicker.input(() => backgroundCol = bgPicker.value());
+
+  // Star color
+  starPicker = createColorPicker(starCol);
+  starPicker.parent(colorContainer);
+  starPicker.input(() => starCol = starPicker.value());
+
+  // Text color
+  textPicker = createColorPicker(textCol);
+  textPicker.parent(colorContainer);
+  textPicker.input(() => textCol = textPicker.value());
+
+  // Save button
   saveBtn = createButton('💾 Save Current Frame');
   saveBtn.parent('canvas-container');
-  saveBtn.mousePressed(() => {
-    saveCanvas('video_frame', 'png');
-  });
+  saveBtn.style('margin-top', '10px');
+  saveBtn.mousePressed(() => saveCanvas('video_frame', 'png'));
 }
 
 function draw() {
@@ -59,9 +82,7 @@ function draw() {
 
       push();
       translate(-starRad2 / 2, 0);
-      if (j % 2 == 1) {
-        translate(starRad2, 0);
-      }
+      if (j % 2 == 1) translate(starRad2, 0);
 
       if (avg < 155) {
         fill(starCol);
