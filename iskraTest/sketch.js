@@ -6,7 +6,7 @@ let backgroundCol = '#FF8939';
 let starCol = '#FF3B32';
 let textCol = '#BD2EFF';
 
-let saveBtn; // button reference
+let saveBtn;
 
 function star(x, y, radius1, radius2, npoints) {
   let angle = TWO_PI / npoints;
