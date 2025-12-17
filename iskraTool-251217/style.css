@@ -15,7 +15,6 @@ html, body {
 }
 
 #canvas-container {
-  transform: scale(0.5);
   flex-shrink: 0;
 }
 
