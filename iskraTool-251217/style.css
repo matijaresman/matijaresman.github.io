@@ -1,0 +1,30 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #d3d3d3;
+}
+
+#container {
+  display: flex;
+  gap: 20px;
+}
+
+#canvas-container {
+  flex-shrink: 0;
+}
+
+#ui-container {
+  width: 280px;
+  font-family: sans-serif;
+  color: #000;
+  flex-direction: column;
+}
+
+#ui-container p {
+  margin: 6px 0 10px;
+}
