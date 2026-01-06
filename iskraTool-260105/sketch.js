@@ -658,6 +658,7 @@ var capturer = new CCapture( {
 } );
 */
 
+// Star function:
 function star(x, y, radius1, radius2, npoints) {
   let angle = TWO_PI / npoints;
   let halfAngle = angle / 2.0;
@@ -958,6 +959,7 @@ function onTextOrGridChange() {
   bgStarsBufferDirty = true;
 }
 
+// Fonts preload:
 function preload() {
   simplexFont = loadFont('./assets/MillingSimplexTrialVAR0,5mm-wght100.ttf');
   triplexFont = loadFont('./assets/MillingTriplexTrialVAR4mm-wght300.ttf');
@@ -997,6 +999,8 @@ function setup() {
 
   bgStarsBuffer = createGraphics(CANVAS_W, CANVAS_H);
   bgStarsBuffer.pixelDensity(pixelDensity());
+
+  // UI Menu:
 
   uiContainer = select('#ui-container');
 
@@ -1152,6 +1156,8 @@ function setup() {
   animateCheckbox.parent(uiContainer);
   animateCheckbox.changed(() => animate = animateCheckbox.checked());
   
+
+  // SVG Logos (styling/positioning in CSS):
   select('#logo-npk').html(`
     <?xml version="1.0" encoding="UTF-8"?>
     <svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168.94 88.02" fill="currentColor">
@@ -1203,6 +1209,9 @@ function setup() {
   `);
 }
 
+//-------------------------------------------------
+
+
 function draw() {
   background(backgroundCol);
 
@@ -1230,7 +1239,7 @@ function draw() {
     bgStarsBufferDirty = true; // mark dirty so next time shown, buffer redraws
   }
   
-
+  // Main stars animation:
   if (animate) {
     phase += 0.1;
   }
@@ -1255,35 +1264,41 @@ function draw() {
     noStroke();
     textSize(80);
     textFont(simplexFont);
-    text(textDateInput, 590, 1150);
+    textAlign(RIGHT, BOTTOM);
+    text(textDateInput, 1038, 1161);
 
     // Text bottom left corner (above line):
     fill(textCol);
     noStroke();
     textSize(42);
     textFont(triplexFont);
-    text(textEventInput, 40, 1150);
+    textAlign(LEFT, BOTTOM);
+    text(textEventInput, 42, 1161);
 
     // Iskra logo top right corner:
     fill(textCol);
     noStroke();
     textSize(42);
     textFont(triplexFont);
-    text(textIskra, 900, 90);
+    textAlign(RIGHT, TOP);
+    text(textIskra, 1038, 42);
+
   } else {
        // Text bottom right corner (above line):
        fill(textCol);
        noStroke();
        textSize(80);
        textFont(simplexFont);
-       text(textDateInput, 590, 90);
+       textAlign(RIGHT, TOP);
+       text(textDateInput, 1038, 21);
    
        // Text bottom left corner (above line):
        fill(textCol);
        noStroke();
        textSize(42);
        textFont(triplexFont);
-       text(textEventInput, 40, 90); 
+       textAlign(LEFT, TOP);
+       text(textEventInput, 42, 21); 
   }
 
 
@@ -1295,6 +1310,7 @@ function draw() {
     width, 1188
   );
 
+  // Color of SVG Logos:
   select('#logo-npk').style('color', textCol);
   select('#logo-zg').style('color', textCol);
 }
