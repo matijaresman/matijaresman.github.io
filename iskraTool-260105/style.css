@@ -33,14 +33,12 @@ html, body {
 }
 
 #ui-container {
-  width: 300px;
+  width: 250px;
   max-width: 100%;
   overflow-y: auto;
   padding-right: 8px;
   box-sizing: border-box;
   color: #000;
-  font-size: 16px;
-  line-height: 1.4;
 }
 
 #ui-container p {
@@ -78,7 +76,7 @@ html, body {
 }
 
 #logo-zg {
-  left: 40px;
+  left: 42px;
   top: 1228px;
   width: 62.134px;
 }
