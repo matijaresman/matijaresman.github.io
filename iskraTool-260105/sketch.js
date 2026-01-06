@@ -959,11 +959,8 @@ function onTextOrGridChange() {
 }
 
 function preload() {
-  simplexFont = loadFont('./assets/MillingSimplexTrialVAR.ttf');
-  triplexFont = loadFont('./assets/MillingTriplexTrialVAR.ttf');
-
-  //logo1 = loadImage("./assets/zgLogo.svg");
-  //logo2 = loadImage("./assets/npkLogo.svg");
+  simplexFont = loadFont('./assets/MillingSimplexTrialVAR0,5mm-wght100.ttf');
+  triplexFont = loadFont('./assets/MillingTriplexTrialVAR4mm-wght300.ttf');
 }
 
 function windowResized() {
