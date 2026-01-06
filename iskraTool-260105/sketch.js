@@ -1042,6 +1042,7 @@ function setup() {
   gridSelect.option("41x51");
   gridSelect.option("49x61");
   gridSelect.option("55x69");
+  gridSelect.option("63x79");
   gridSelect.option("73x91");
   gridSelect.selected("55x69");
   gridSelect.changed(() => {
@@ -1060,7 +1061,12 @@ function setup() {
     } else if (gridSelect.value() === "55x69") {
       colNum = 55;
       rowNum = 69;
-    } else {
+    }  else if (gridSelect.value() === "63x79") {
+      colNum = 63;
+      rowNum = 79;
+    }
+    
+    else {
       colNum = 73;
       rowNum = 91;
     }
