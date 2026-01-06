@@ -782,8 +782,24 @@ function getStarRotation(armNr) {
       return 0;
     case 5:
       return -HALF_PI;
+    case 7:
+      return radians(360 / 7 / 4);
+    case 9:
+      return -radians(360 / 9 / 4);
+    case 10:
+      return radians(360 / 10 / 2);
     case 12:
-      return radians(30);
+      return radians(360 / 12);
+    case 16:
+      return 0;
+    case 19:
+      return radians(360 / 19 / 4);
+    case 22:
+      return radians(360 / 22 / 2);
+    case 25:
+      return -radians(360 / 25 / 4);
+    case 28:
+      return radians(360 / 28 / 8);
     case 38:
       return radians(360 / 38 / 2);
     default:
@@ -1091,7 +1107,7 @@ function setup() {
 
   createP("Number of arms").parent(uiContainer);
   armSelect = createSelect();
-  [4, 5, 12, 38].forEach(v => armSelect.option(v));
+  [4, 5, 7, 9, 10, 12, 16, 19, 22, 25, 28, 38].forEach(v => armSelect.option(v));
   armSelect.selected("4");
   armSelect.changed(() => {
     armNr = int(armSelect.value());
@@ -1207,6 +1223,7 @@ function setup() {
       </g>
     </svg>
   `);
+
 }
 
 //-------------------------------------------------
@@ -1265,7 +1282,7 @@ function draw() {
     textSize(80);
     textFont(simplexFont);
     textAlign(RIGHT, BOTTOM);
-    text(textDateInput, 1038, 1161);
+    text(textDateInput, 1038, 1173);
 
     // Text bottom left corner (above line):
     fill(textCol);
