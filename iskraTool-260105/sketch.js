@@ -1038,6 +1038,9 @@ function setup() {
   createP("Select grid").parent(uiContainer);
   gridSelect = createSelect();
   gridSelect.option("33x41");
+  gridSelect.option("39x49");
+  gridSelect.option("41x51");
+  gridSelect.option("49x61");
   gridSelect.option("55x69");
   gridSelect.option("73x91");
   gridSelect.selected("55x69");
@@ -1045,6 +1048,15 @@ function setup() {
     if (gridSelect.value() === "33x41") {
       colNum = 33;
       rowNum = 41;
+    } else if (gridSelect.value() === "39x49") {
+      colNum = 39;
+      rowNum = 49;
+    } else if (gridSelect.value() === "41x51") {
+      colNum = 41;
+      rowNum = 51;
+    } else if (gridSelect.value() === "49x61") {
+      colNum = 49;
+      rowNum = 61;
     } else if (gridSelect.value() === "55x69") {
       colNum = 55;
       rowNum = 69;
