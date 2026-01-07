@@ -1000,7 +1000,22 @@ function updateCanvasScale() {
   wrapper.style.transform = `scale(${scale})`;
 }
 
+// Save frame function:
+function saveFrameAsPNG() {
+  const timestamp =
+    year() + "-" +
+    nf(month(), 2) + "-" +
+    nf(day(), 2) + "_" +
+    nf(hour(), 2) + "-" +
+    nf(minute(), 2) + "-" +
+    nf(second(), 2);
 
+  saveCanvas(`star-${timestamp}`, 'png');
+}
+
+//=============================================
+
+// SETUP FUNCTION START:
 function setup() {
   const container = document.getElementById('canvas-container');
   const w = container.clientWidth;
@@ -1276,6 +1291,9 @@ function setup() {
   animateCheckbox.parent(uiContainer);
   animateCheckbox.changed(() => animate = animateCheckbox.checked());
   
+  const saveBtn = createButton("Save PNG");
+  saveBtn.parent(uiContainer);
+  saveBtn.mousePressed(saveFrameAsPNG);
 
   // SVG Logos (styling/positioning in CSS):
   select('#logo-npk').html(`
@@ -1330,8 +1348,11 @@ function setup() {
 
 }
 
-//-------------------------------------------------
+//SETUP FUNCTION END
 
+//=============================================
+
+// DRAW FUNCTION START
 
 function draw() {
   background(backgroundCol);
