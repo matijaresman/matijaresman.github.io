@@ -1093,7 +1093,7 @@ function setup() {
   lineSpacingSlider.parent(uiContainer);
 
   createP("Text box X").parent(uiContainer);
-  textOffsetXSlider = createSlider(0, 20, 1, 1);
+  textOffsetXSlider = createSlider(0, 73, 1, 1);
   textOffsetXSlider.parent(uiContainer);
   textOffsetXSlider.input(() => {
     textOffsetX = textOffsetXSlider.value();
@@ -1101,7 +1101,7 @@ function setup() {
   });
 
   createP("Text box Y").parent(uiContainer);
-  textOffsetYSlider = createSlider(-20, 60, 0, 1);
+  textOffsetYSlider = createSlider(-20, 91, 0, 1);
   textOffsetYSlider.parent(uiContainer);
   textOffsetYSlider.input(() => {
     textOffsetY = textOffsetYSlider.value();
