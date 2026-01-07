@@ -1017,6 +1017,7 @@ function drawStarOnBuffer(buf, x, y, r1, r2, npoints) {
 
 function onTextOrGridChange() {
   bgStarsBufferDirty = true;
+  generateBgStars();
 }
 
 // Fonts preload:
@@ -1299,6 +1300,7 @@ function setup() {
   armSelect.changed(() => {
     armNr = int(armSelect.value());
     bgStarsBufferDirty = true;
+    generateBgStars();
   });
   armSelect.parent(uiContainer);
 
@@ -1307,6 +1309,7 @@ function setup() {
   starRad1Slider.input(() => {
     starRad1 = starRad1Slider.value();
     bgStarsBufferDirty = true;
+    generateBgStars();
   });
   starRad1Slider.parent(uiContainer);
 
@@ -1315,6 +1318,7 @@ function setup() {
   starRad2Slider.input(() => {
     starRad2 = starRad2Slider.value();
     bgStarsBufferDirty = true;
+    generateBgStars();
   });
   starRad2Slider.parent(uiContainer);
 
@@ -1323,6 +1327,7 @@ function setup() {
   bgStarProbSlider.input(() => {
     bgStarProb = bgStarProbSlider.value();
     bgStarsBufferDirty = true;
+    generateBgStars();
   });
   bgStarProbSlider.parent(uiContainer);
 
