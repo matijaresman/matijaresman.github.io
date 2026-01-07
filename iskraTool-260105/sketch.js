@@ -1108,21 +1108,107 @@ function setup() {
     onTextOrGridChange();
   });
 
+  //Star color:
   createP("Star color").parent(uiContainer);
-  starColorPicker = createColorPicker(starCol);
-  starColorPicker.input(() => starCol = starColorPicker.value());
-  starColorPicker.parent(uiContainer);
 
+  const starColors = [
+    "#340924",
+    "#FB68FF",
+    "#875EFF",
+    "#FE2C35",
+    "#F14C03",
+    "#E3FFAB",
+    "#C3B8A6"
+  ];
+  
+  const swatchContainer1 = createDiv();
+  swatchContainer1.parent(uiContainer);
+  swatchContainer1.style("display", "flex");
+  swatchContainer1.style("gap", "6px");
+  
+  starColors.forEach(c => {
+    const btn = createButton("");
+    btn.parent(swatchContainer1);
+    btn.style("background-color", c);
+    btn.style("width", "20px");
+    btn.style("height", "20px");
+    btn.style("border-radius", "50%");
+    btn.style("border", "1px solid #444");
+    btn.style("cursor", "pointer");
+  
+    btn.mousePressed(() => {
+      starCol = color(c);
+    });
+  });
+  
+
+  //Background color:
   createP("Background color").parent(uiContainer);
-  bgColorPicker = createColorPicker(backgroundCol);
-  bgColorPicker.input(() => backgroundCol = bgColorPicker.value());
-  bgColorPicker.parent(uiContainer);
 
-  createP("Additional text color").parent(uiContainer);
-  textColorPicker = createColorPicker(textCol);
-  textColorPicker.input(() => textCol = textColorPicker.value());
-  textColorPicker.parent(uiContainer);
+  const backgroundColors = [
+    "#340924",
+    "#FB68FF",
+    "#875EFF",
+    "#FE2C35",
+    "#F14C03",
+    "#E3FFAB",
+    "#C3B8A6"
+  ];
+  
+  const swatchContainer2 = createDiv();
+  swatchContainer2.parent(uiContainer);
+  swatchContainer2.style("display", "flex");
+  swatchContainer2.style("gap", "6px");
+  
+  backgroundColors.forEach(c => {
+    const btn = createButton("");
+    btn.parent(swatchContainer2);
+    btn.style("background-color", c);
+    btn.style("width", "20px");
+    btn.style("height", "20px");
+    btn.style("border-radius", "50%");
+    btn.style("border", "1px solid #444");
+    btn.style("cursor", "pointer");
+  
+    btn.mousePressed(() => {
+      backgroundCol = color(c);
+    });
+  });
 
+  // Additional text color:
+  createP("Info text color").parent(uiContainer);
+
+  const infoColors = [
+    "#340924",
+    "#FB68FF",
+    "#875EFF",
+    "#FE2C35",
+    "#F14C03",
+    "#E3FFAB",
+    "#C3B8A6"
+  ];
+  
+  const swatchContainer3 = createDiv();
+  swatchContainer3.parent(uiContainer);
+  swatchContainer3.style("display", "flex");
+  swatchContainer3.style("gap", "6px");
+  
+  infoColors.forEach(c => {
+    const btn = createButton("");
+    btn.parent(swatchContainer3);
+    btn.style("background-color", c);
+    btn.style("width", "20px");
+    btn.style("height", "20px");
+    btn.style("border-radius", "50%");
+    btn.style("border", "1px solid #444");
+    btn.style("cursor", "pointer");
+  
+    btn.mousePressed(() => {
+      textCol = color(c);
+    });
+  });
+
+  // Number of arms:
   createP("Number of arms").parent(uiContainer);
   armSelect = createSelect();
   [4, 5, 7, 9, 10, 12, 16, 19, 22, 25, 28, 38].forEach(v => armSelect.option(v));
