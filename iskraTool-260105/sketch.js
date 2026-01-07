@@ -1407,7 +1407,7 @@ function draw() {
     textSize(80);
     textFont(simplexFont);
     textAlign(RIGHT, BOTTOM);
-    text(textDateInput, 1038, 1173);
+    text(textDateInput, 1038, 1172);
 
     // Text bottom left corner (above line):
     fill(textCol);
@@ -1440,7 +1440,7 @@ function draw() {
        textSize(42);
        textFont(triplexFont);
        textAlign(LEFT, TOP);
-       text(textEventInput, 42, 21); 
+       text(textEventInput, 42, 29); 
   }
 
 
