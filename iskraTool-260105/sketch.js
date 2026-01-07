@@ -1423,7 +1423,7 @@ function draw() {
     textSize(42);
     textFont(triplexFont);
     textAlign(RIGHT, TOP);
-    text(textIskra, 1038, 42);
+    text(textIskra, 1038, 29);
 
   } else {
        // Text bottom right corner (above line):
