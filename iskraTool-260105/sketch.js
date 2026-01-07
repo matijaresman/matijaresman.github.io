@@ -1010,7 +1010,7 @@ function saveFrameAsPNG() {
     nf(minute(), 2) + "-" +
     nf(second(), 2);
 
-  saveCanvas(`star-${timestamp}`, 'png');
+  saveCanvas(`iskra-${timestamp}`, 'png');
 }
 
 //=============================================
