@@ -1101,7 +1101,7 @@ function setup() {
   });
 
   createP("Text box Y").parent(uiContainer);
-  textOffsetYSlider = createSlider(0, 20, 0, 1);
+  textOffsetYSlider = createSlider(-20, 60, 0, 1);
   textOffsetYSlider.parent(uiContainer);
   textOffsetYSlider.input(() => {
     textOffsetY = textOffsetYSlider.value();
