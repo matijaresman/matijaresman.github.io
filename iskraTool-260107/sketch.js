@@ -652,7 +652,7 @@ const letterWidthMap = {
 };
 
 let backgroundCol = '#FFFFFF';
-let starCol = '#FF00FF';
+let starCol = '#FB68FF';
 let gridCol = '#000000';
 let textCol = '#000000';
 
@@ -1218,6 +1218,9 @@ function setup() {
   
     btn.mousePressed(() => {
       starCol = color(c);
+      if (!scaleBackground && !animateBackground) {
+        drawBgStarsLive(); // redraw background stars once with new color
+      }
     });
   });
   
@@ -1336,11 +1339,11 @@ function setup() {
   });
   addStylingSelect.parent(uiContainer);
 
-  gridCheckbox = createCheckbox("Show grid", false);
+  gridCheckbox = createCheckbox("Grid", false);
   gridCheckbox.changed(() => showGrid = gridCheckbox.checked());
   gridCheckbox.parent(uiContainer);
 
-  bgStarsCheckbox = createCheckbox("Show background stars", false);
+  bgStarsCheckbox = createCheckbox("Background stars", false);
   bgStarsCheckbox.changed(() => {
     showbgStars = bgStarsCheckbox.checked();
     generateBgStars();
@@ -1348,23 +1351,23 @@ function setup() {
   
   bgStarsCheckbox.parent(uiContainer);
 
-  textCheckbox = createCheckbox("Show text", true);
+  textCheckbox = createCheckbox("Text", true);
   textCheckbox.changed(() => showText = textCheckbox.checked());
   textCheckbox.parent(uiContainer);
 
-  backgroundCheckbox = createCheckbox("Animate background stars", false);
+  backgroundCheckbox = createCheckbox("Animate stars", false);
   backgroundCheckbox.changed(() => animateBackground = backgroundCheckbox.checked());
   backgroundCheckbox.parent(uiContainer);
 
-  animateCheckbox = createCheckbox("Animate text", false);
-  animateCheckbox.parent(uiContainer);
-  animateCheckbox.changed(() => animate = animateCheckbox.checked());
-  
-  bgStarsScaleCheckbox = createCheckbox("Animate background star size", false);
+  bgStarsScaleCheckbox = createCheckbox("Star size animation", false);
   bgStarsScaleCheckbox.parent(uiContainer);
   bgStarsScaleCheckbox.changed(() => {
     scaleBackground = bgStarsScaleCheckbox.checked();
   });
+
+  animateCheckbox = createCheckbox("Animate text", false);
+  animateCheckbox.parent(uiContainer);
+  animateCheckbox.changed(() => animate = animateCheckbox.checked());
 
   const saveBtn = createButton("Save PNG");
   saveBtn.parent(uiContainer);
@@ -1454,7 +1457,7 @@ function draw() {
   }
 
   if (showbgStars) {
-
+    
     // --- compute animated radii ---
     if (scaleBackground) {
       animatedBgStarRad1 = starRad1 * (1 + Math.abs(Math.sin(phase)));
@@ -1465,7 +1468,7 @@ function draw() {
     }
   
     // --- decide redraw strategy ---
-    if (animateBackground || scaleBackground) {
+    if (animateBackground || scaleBackground || !animateBackground && !scaleBackground) {
   
       // regenerate ONLY if animateBackground is on
       if (animateBackground) {
