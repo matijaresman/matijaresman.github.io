@@ -1868,7 +1868,7 @@ function setup() {
   createP("bgStars1: arms number").parent(uiContainer);
   armSliderBg1 = createSlider(4, 38, 4, 1);
   armSliderBg1.input(() => {
-    setArmNr('bg2', armSliderBg1.value());
+    setArmNr('bg1', armSliderBg1.value());
   });
   armSliderBg1.parent(uiContainer);
   armInputBg1 = createInput('4', 'number');
