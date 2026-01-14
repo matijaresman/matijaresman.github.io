@@ -2113,12 +2113,12 @@ function setup() {
   createP("radius2")
   .parent(bgStarsGroup1)
   .class("ui-label");
-  bgStar1Rad2Slider = createSlider(1, 100, 5, 0.1);
+  bgStar1Rad2Slider = createSlider(1, 100, 15, 0.1);
   bgStar1Rad2Slider.input(() => {
     setRad('bg1Rad2', bgStar1Rad2Slider.value());
   });
   bgStar1Rad2Slider.parent(bgStarsGroup1);
-  bgStar1Rad2Input = createInput('5', 'number');
+  bgStar1Rad2Input = createInput('15', 'number');
   bgStar1Rad2Input.attribute('min', 1);
   bgStar1Rad2Input.attribute('max', 100);
   bgStar1Rad2Input.attribute('step', 0.1);
@@ -2166,12 +2166,12 @@ function setup() {
   createP("radius2")
   .parent(bgStarsGroup2)
   .class("ui-label");
-  bgStar2Rad2Slider = createSlider(1, 100, 5, 0.1);
+  bgStar2Rad2Slider = createSlider(1, 100, 15, 0.1);
   bgStar2Rad2Slider.input(() => {
     setRad('bg2Rad2', bgStar2Rad2Slider.value());
   });
   bgStar2Rad2Slider.parent(bgStarsGroup2);
-  bgStar2Rad2Input = createInput('5', 'number');
+  bgStar2Rad2Input = createInput('15', 'number');
   bgStar2Rad2Input.attribute('min', 1);
   bgStar2Rad2Input.attribute('max', 100);
   bgStar2Rad2Input.attribute('step', 0.1);
