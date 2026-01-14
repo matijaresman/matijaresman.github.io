@@ -2294,9 +2294,9 @@ function draw() {
     // --- compute animated radii ---
     if (scaleBackground) {
       animatedBgStar1Rad1 = bgStar1Rad1 * (0.25 + Math.abs(Math.sin(phase * 3)));
-      animatedBgStar1Rad2 = bgStar1Rad2 * (0.25 + Math.abs(Math.sin(phase)));
+      animatedBgStar1Rad2 = bgStar1Rad2 * (0.25 + Math.abs(Math.sin(phase * 3)));
 
-      animatedBgStar2Rad1 = bgStar2Rad1 * (0.25 + Math.abs(Math.sin(phase * 3)));
+      animatedBgStar2Rad1 = bgStar2Rad1 * (0.25 + Math.abs(Math.sin(phase)));
       animatedBgStar2Rad2 = bgStar2Rad2 * (0.25 + Math.abs(Math.sin(phase)));
     } else {
       animatedBgStar1Rad1 = bgStar1Rad1;
