@@ -2027,7 +2027,9 @@ function setup() {
 
   const bgStarsGroup = createUIGroup("Background stars", uiContainer);
 
-  createP("ratio").parent(bgStarsGroup);
+  createP("ratio")
+  .parent(bgStarsGroup)
+  .class("ui-label");
   bgStarProbSlider = createSlider(0.0, 1.0, 0.25, 0.05);
   bgStarProbSlider.input(() => {
     setBgRatio(bgStarProbSlider.value());
@@ -2047,7 +2049,8 @@ function setup() {
   bgStarProbInput.parent(bgStarsGroup);
 
   const bgRefreshBtn = createButton("Refresh background");
-  bgRefreshBtn.parent(bgStarsGroup);
+  bgRefreshBtn
+  .parent(bgStarsGroup);
   bgRefreshBtn.mousePressed(regenerateBgStarsFrame);
 
   bgStarsCheckbox = createCheckbox("show", false);
@@ -2055,7 +2058,9 @@ function setup() {
     showbgStars = bgStarsCheckbox.checked();
     generateBgStars();
   });
-  bgStarsCheckbox.parent(bgStarsGroup);
+  bgStarsCheckbox
+  .parent(bgStarsGroup)
+  .class("ui-label");
 
   const bgStarsGroup1 = createUIGroup("Background stars 1", uiContainer);
   // Number of arms BG1:
