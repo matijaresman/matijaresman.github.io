@@ -33,7 +33,7 @@ html, body {
 }
 
 #ui-container {
-  width: 300px;
+  width: 232px;
   max-width: 100%;
   overflow-y: auto;
   padding-right: 8px;
@@ -104,6 +104,28 @@ html, body {
   background: #000;
   cursor: pointer;
 }
+
+.ui-group {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #b7b7b7;
+  padding: 10px;
+  margin-bottom: 14px;
+  border-radius: 4px;
+}
+
+.ui-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.ui-label {
+  font-size: 14px;
+  text-transform: lowercase;
+  opacity: 0.75;
+  margin: 4px 0 px;
+}
+
 
 .svg-logo {
   position: absolute;
