@@ -1291,7 +1291,10 @@ function generateBgStars() {
   bgStars1 = [];
   bgStars2 = [];
 
-  const letterBoxes = getLetterBoundingBoxes(textInput);
+  const letterBoxes = showText
+  ? getLetterBoundingBoxes(textInput)
+  : null;
+
   const rotation1 = getStarRotation(armNrBg1);
   const rotation2 = getStarRotation(armNrBg2);
   for (let i = 0; i < colNum; i++) {
@@ -1308,16 +1311,20 @@ function generateBgStars() {
         yPx > height - 300
       ) continue;
 
-      // Exclude letters
-      let insideLetter = false;
-      for (let box of letterBoxes) {
-        if (i >= box.colMin && i <= box.colMax &&
-            j >= box.rowMin && j <= box.rowMax) {
-          insideLetter = true;
-          break;
+      // Exclude letters ONLY if text is shown
+      if (showText && letterBoxes) {
+        let insideLetter = false;
+        for (let box of letterBoxes) {
+          if (
+            i >= box.colMin && i <= box.colMax &&
+            j >= box.rowMin && j <= box.rowMax
+          ) {
+            insideLetter = true;
+            break;
+          }
         }
+        if (insideLetter) continue;
       }
-      if (insideLetter) continue;
 
       // --- NOISE-BASED DENSITY ---
       const n = noise(
@@ -1850,7 +1857,12 @@ function setup() {
 
 
   textCheckbox = createCheckbox("show", true);
-  textCheckbox.changed(() => showText = textCheckbox.checked());
+  textCheckbox.changed(() => {
+    showText = textCheckbox.checked();
+  
+    bgStarsBufferDirty = true;
+    generateBgStars();   // 👈 FORCE immediate rebuild
+  });  
   textCheckbox
   .parent(textGroup)
   .class("ui-label");
