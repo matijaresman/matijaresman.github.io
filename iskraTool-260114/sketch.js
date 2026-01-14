@@ -10,8 +10,10 @@ let logo2;
 
 let starRad1 = 5;
 let starRad2 = 15;
-let bgStarRad1 = 5;
-let bgStarRad2 = 15;
+let bgStar1Rad1 = 5;
+let bgStar1Rad2 = 15;
+let bgStar2Rad1 = 5;
+let bgStar2Rad2 = 15;
 let armNr = 4;
 let armNrBg1 = 4;
 let armNrBg2 = 7;
@@ -23,7 +25,8 @@ let animate = false;
 let scaleBackground = false;
 let phase = 0;
 let animatedRad1, animatedRad2;
-let animatedBgStarRad1, animatedBgStarRad2;
+let animatedBgStar1Rad1, animatedBgStar1Rad2;
+let animatedBgStar2Rad1, animatedBgStar2Rad2;
 
 const CANVAS_W = 1080;
 const CANVAS_H = 1350;
@@ -1238,6 +1241,7 @@ function updateStarSize() {
   starRad2 = starRad2Slider.value();
 }
 
+/*
 function bgAnim() {
   const letterBoxes = getLetterBoundingBoxes(textInput);
 
@@ -1281,6 +1285,7 @@ function bgAnim() {
     }
   }
 }
+*/
 
 function generateBgStars() {
   bgStars1 = [];
@@ -1359,7 +1364,7 @@ function drawBgStarsLive() {
     push();
     translate(s.x, s.y);
     rotate(s.rot);
-    star(0, 0, animatedBgStarRad1, animatedBgStarRad2, armNrBg1);
+    star(0, 0, animatedBgStar1Rad1, animatedBgStar1Rad2, armNrBg1);
     pop();
   }
 
@@ -1367,7 +1372,7 @@ function drawBgStarsLive() {
     push();
     translate(s.x, s.y);
     rotate(s.rot);
-    star(0, 0, animatedBgStarRad1, animatedBgStarRad2, armNrBg2);
+    star(0, 0, animatedBgStar2Rad1, animatedBgStar2Rad2, armNrBg2);
     pop();
   }
 
@@ -1438,7 +1443,6 @@ function setArmNr(target, value) {
       armSliderBg1.value(value);
       armInputBg1.value(value);
       bgStarsBufferDirty = true;
-      generateBgStars();
       break;
 
     case 'bg2':
@@ -1446,7 +1450,6 @@ function setArmNr(target, value) {
       armSliderBg2.value(value);
       armInputBg2.value(value);
       bgStarsBufferDirty = true;
-      generateBgStars();
       break;
   }
 }
@@ -1475,6 +1478,61 @@ function setTxtPos(target, value) {
   }
 }
 
+function setRad(target, value) {
+  value = constrain(value, 1, 100);
+
+  switch (target) {
+    case 'txtRad1' :
+      starRad1 = value;
+      starRad1Slider.value(value);
+      starRad1Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'txtRad2' :
+      starRad2 = value;
+      starRad2Slider.value(value);
+      starRad2Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'bg1Rad1' :
+      bgStar1Rad1 = value;
+      bgStar1Rad1Slider.value(value);
+      bgStar1Rad1Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'bg1Rad2' :
+      bgStar1Rad2 = value;
+      bgStar1Rad2Slider.value(value);
+      bgStar1Rad2Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'bg2Rad1' :
+      bgStar2Rad1 = value;
+      bgStar2Rad1Slider.value(value);
+      bgStar2Rad1Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'bg2Rad2' :
+      bgStar2Rad2 = value;
+      bgStar2Rad2Slider.value(value);
+      bgStar2Rad2Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+  }
+}
+
+/*
 function setRad1(value) {
   value = constrain(value, 1, 100);
 
@@ -1510,6 +1568,7 @@ function setRad1(value) {
   bgStarsBufferDirty = true;
   generateBgStars();
 }
+*/
 
 function setBgRatio(value) {
   value = constrain(value, 0.00, 1.00);
@@ -1604,6 +1663,12 @@ function saveFrameAsPNG() {
   saveCanvas(`iskra-${timestamp}`, 'png');
 }
 
+function createUIGroup(title, parent) {
+  const group = createDiv().class('ui-group').parent(parent);
+  createDiv(title).class('ui-group-title').parent(group);
+  return group;
+}
+
 //=============================================
 
 // SETUP FUNCTION START:
@@ -1629,32 +1694,220 @@ function setup() {
 
   uiContainer = select('#ui-container');
 
+  // TEXT GROUP: 
+  const textGroup = createUIGroup("Main text", uiContainer);
+
   textField = createInput(textInput);
-  textField.parent(uiContainer);
+  textField.parent(textGroup);
   textField.input(() => {
     textInput = textField.value();
     onTextOrGridChange();
     generateBgStars();
   });
 
+  createP("kerning")
+  .class("ui-label")
+  .parent(textGroup);
+  kerningSlider = createSlider(-2, 5, -1, 1);
+  kerningSlider.input(() => {
+    setKerning(kerningSlider.value());
+  });
+  kerningSlider.parent(textGroup);
+  kerningInput = createInput('-1', 'number');
+  kerningInput.attribute('min', -2);
+  kerningInput.attribute('max', 5);
+  kerningInput.attribute('step', 1);
+  kerningInput.input(() => {
+    setKerning(kerningInput.value());
+  });
+  kerningInput.parent(textGroup); 
+
+  createP("line spacing")
+  .parent(textGroup)
+  .class("ui-label");
+  lineSpacingSlider = createSlider(-4, 10, -2, 1);
+  lineSpacingSlider.input(() => {
+    setLineSpacing(lineSpacingSlider.value());
+    onTextOrGridChange();
+  });
+  lineSpacingSlider.parent(textGroup);
+  lineSpacingInput = createInput('-2', 'number');
+  lineSpacingInput.attribute('min', -4);
+  lineSpacingInput.attribute('max', 10);
+  lineSpacingInput.attribute('step', 1);
+  lineSpacingInput.input(() => {
+    setLineSpacing(lineSpacingInput.value());
+  });
+  lineSpacingInput.parent(textGroup);
+
+  createP("x-offset")
+  .parent(textGroup)
+  .class("ui-label");
+  textOffsetXSlider = createSlider(0, 73, 1, 1);
+  textOffsetXSlider.parent(textGroup);
+  textOffsetXSlider.input(() => {
+    setTxtPos('textX', textOffsetXSlider.value());
+    onTextOrGridChange();
+  });
+  textOffsetXInput = createInput('1', 'number');
+  textOffsetXInput.attribute('min', 0);
+  textOffsetXInput.attribute('max', 73);
+  textOffsetXInput.attribute('step', 1);
+  textOffsetXInput.input(() => {
+    setTxtPos('textX', textOffsetXInput.value());
+    onTextOrGridChange();
+  });
+  textOffsetXInput.parent(textGroup);  
+
+  createP("y-offset")
+  .parent(textGroup)
+  .class("ui-label");
+  textOffsetYSlider = createSlider(-20, 91, 1, 1);
+  textOffsetYSlider.parent(textGroup);
+  textOffsetYSlider.input(() => {
+    setTxtPos('textY', textOffsetYSlider.value());
+    onTextOrGridChange();
+  });
+  textOffsetYInput = createInput('0', 'number');
+  textOffsetYInput.attribute('min', -20);
+  textOffsetYInput.attribute('max', 91);
+  textOffsetYInput.attribute('step', 1);
+  textOffsetYInput.input(() => {
+    setTxtPos('textY', textOffsetYInput.value());
+    onTextOrGridChange();
+  });
+  textOffsetYInput.parent(textGroup);
+
+  //Star color:
+  createP("stars color")
+  .parent(textGroup)
+  .class("ui-label");
+  const starColors = [
+    "#340924",
+    "#FB68FF",
+    "#875EFF",
+    "#FE2C35",
+    "#F14C03",
+    "#E3FFAB",
+    "#C3B8A6"
+  ];
+  const swatchContainer1 = createDiv();
+  swatchContainer1.parent(textGroup);
+  swatchContainer1.style("display", "flex");
+  swatchContainer1.style("gap", "6px");
+
+  // Number of arms TXT:
+  createP("arms number")
+  .parent(textGroup)
+  .class("ui-label");
+  armSlider = createSlider(4, 38, 4, 1);
+  armSlider.input(() => {
+    setArmNr('text', armSlider.value());
+  });
+  armSlider.parent(textGroup);
+  armInput = createInput('4', 'number');
+  armInput.attribute('min', 4);
+  armInput.attribute('max', 38);
+  armInput.attribute('step', 1);
+  armInput.input(() => {
+    setArmNr('text', armInput.value());
+  });
+  armInput.parent(textGroup);  
+
+  createP("radius1")
+  .parent(textGroup)
+  .class("ui-label");
+  starRad1Slider = createSlider(1, 100, 5, 0.1);
+  starRad1Slider.input(() => {
+    setRad('txtRad1', starRad1Slider.value());
+  });
+  starRad1Slider.parent(textGroup);
+  starRad1Input = createInput('5', 'number');
+  starRad1Input.attribute('min', 1);
+  starRad1Input.attribute('max', 100);
+  starRad1Input.attribute('step', 0.1);
+  starRad1Input.input(() => {
+    setRad('txtRad1', starRad1Input.value());
+  });
+  starRad1Input.parent(textGroup); 
+
+  createP("radius2")
+  .parent(textGroup)
+  .class("ui-label");
+  starRad2Slider = createSlider(1, 100, 15, 0.1);
+  starRad2Slider.input(() => {
+    setRad('txtRad2', starRad2Slider.value());
+  });
+  starRad2Slider.parent(textGroup);
+  starRad2Input = createInput('15', 'number');
+  starRad2Input.attribute('min', 1);
+  starRad2Input.attribute('max', 100);
+  starRad2Input.attribute('step', 0.1);
+  starRad2Input.input(() => {
+    setRad('txtRad2', starRad2Input.value());
+  });
+  starRad2Input.parent(textGroup);
+
+
+  textCheckbox = createCheckbox("show", true);
+  textCheckbox.changed(() => showText = textCheckbox.checked());
+  textCheckbox.parent(textGroup);
+
+  // ADDITIONAL TEXT:
+  const additionalTextGroup = createUIGroup("Additional text", uiContainer);
+
   textField1 = createInput(textField1Input);
-  textField1.parent(uiContainer);
+  textField1.parent(additionalTextGroup);
   textField1.input(() => textField1Input = textField1.value());
 
   textField2 = createInput(textField2Input);
-  textField2.parent(uiContainer);
+  textField2.parent(additionalTextGroup);
   textField2.input(() => textField2Input = textField2.value());
 
   textField3 = createInput(textField3Input);
-  textField3.parent(uiContainer);
+  textField3.parent(additionalTextGroup);
   textField3.input(() => textField3Input = textField3.value());
 
   textField4 = createInput(textField4Input);
-  textField4.parent(uiContainer);
+  textField4.parent(additionalTextGroup);
   textField4.input(() => textField4Input = textField4.value());
+
+  createP("styling")
+  .parent(additionalTextGroup)
+  .class("ui-label");
+  addStylingSelect = createSelect();
+  addStylingSelect.option("Style 1");
+  addStylingSelect.option("Style 2");
+  addStylingSelect.changed(() => {
+    if (addStylingSelect.value() === "Style 1") {
+      addStyling = true;
+    } else if (addStylingSelect.value() === "Style 2") {
+      addStyling = false;
+    }
+  });
+  addStylingSelect.parent(additionalTextGroup);
+
+  // Additional text color:
+  createP("infoText: color")
+  .parent(additionalTextGroup)
+  .class("ui-label");
+  const infoColors = [
+    "#340924",
+    "#FB68FF",
+    "#875EFF",
+    "#FE2C35",
+    "#F14C03",
+    "#E3FFAB",
+    "#C3B8A6"
+  ];
+  const swatchContainer3 = createDiv();
+  swatchContainer3.parent(additionalTextGroup);
+  swatchContainer3.style("display", "flex");
+  swatchContainer3.style("gap", "6px");
   
+  const gridGroup = createUIGroup("Grid", uiContainer);
+
   // Grid select:
-  createP("gridSelect").parent(uiContainer);
   gridSelect = createSelect();
   gridSelect.option("33x41");
   gridSelect.option("39x49");
@@ -1694,90 +1947,15 @@ function setup() {
     onTextOrGridChange();
     generateBgStars();
   });
-  gridSelect.parent(uiContainer);
+  gridSelect
+  .parent(gridGroup)
+  .class("ui-label");
 
-  createP("kerning").parent(uiContainer);
-  kerningSlider = createSlider(-2, 5, -1, 1);
-  kerningSlider.input(() => {
-    setKerning(kerningSlider.value());
-  });
-  kerningSlider.parent(uiContainer);
-  kerningInput = createInput('-1', 'number');
-  kerningInput.attribute('min', -2);
-  kerningInput.attribute('max', 5);
-  kerningInput.attribute('step', 1);
-  kerningInput.input(() => {
-    setKerning(kerningInput.value());
-  });
-  kerningInput.parent(uiContainer); 
-
-  createP("lineSpacing").parent(uiContainer);
-  lineSpacingSlider = createSlider(-4, 10, -2, 1);
-  lineSpacingSlider.input(() => {
-    setLineSpacing(lineSpacingSlider.value());
-    onTextOrGridChange();
-  });
-  lineSpacingSlider.parent(uiContainer);
-  lineSpacingInput = createInput('-2', 'number');
-  lineSpacingInput.attribute('min', -4);
-  lineSpacingInput.attribute('max', 10);
-  lineSpacingInput.attribute('step', 1);
-  lineSpacingInput.input(() => {
-    setLineSpacing(lineSpacingInput.value());
-  });
-  lineSpacingInput.parent(uiContainer);
-
-  createP("text: x-offset").parent(uiContainer);
-  textOffsetXSlider = createSlider(0, 73, 1, 1);
-  textOffsetXSlider.parent(uiContainer);
-  textOffsetXSlider.input(() => {
-    setTxtPos('textX', textOffsetXSlider.value());
-    onTextOrGridChange();
-  });
-  textOffsetXInput = createInput('1', 'number');
-  textOffsetXInput.attribute('min', 0);
-  textOffsetXInput.attribute('max', 73);
-  textOffsetXInput.attribute('step', 1);
-  textOffsetXInput.input(() => {
-    setTxtPos('textX', textOffsetXInput.value());
-    onTextOrGridChange();
-  });
-  textOffsetXInput.parent(uiContainer);  
-
-  createP("text: y-offset").parent(uiContainer);
-  textOffsetYSlider = createSlider(-20, 91, 1, 1);
-  textOffsetYSlider.parent(uiContainer);
-  textOffsetYSlider.input(() => {
-    setTxtPos('textY', textOffsetYSlider.value());
-    onTextOrGridChange();
-  });
-  textOffsetYInput = createInput('0', 'number');
-  textOffsetYInput.attribute('min', -20);
-  textOffsetYInput.attribute('max', 91);
-  textOffsetYInput.attribute('step', 1);
-  textOffsetYInput.input(() => {
-    setTxtPos('textY', textOffsetYInput.value());
-    onTextOrGridChange();
-  });
-  textOffsetYInput.parent(uiContainer); 
-
-  //Star color:
-  createP("stars: color").parent(uiContainer);
-
-  const starColors = [
-    "#340924",
-    "#FB68FF",
-    "#875EFF",
-    "#FE2C35",
-    "#F14C03",
-    "#E3FFAB",
-    "#C3B8A6"
-  ];
-  
-  const swatchContainer1 = createDiv();
-  swatchContainer1.parent(uiContainer);
-  swatchContainer1.style("display", "flex");
-  swatchContainer1.style("gap", "6px");
+  gridCheckbox = createCheckbox("Show", false);
+  gridCheckbox.changed(() => showGrid = gridCheckbox.checked());
+  gridCheckbox
+  .parent(gridGroup)
+  .class("ui-label");
   
   starColors.forEach(c => {
     const btn = createButton("");
@@ -1798,9 +1976,8 @@ function setup() {
   });
   
 
+  const bgGroup = createUIGroup("Background stars", uiContainer);
   //Background color:
-  createP("background: color").parent(uiContainer);
-
   const backgroundColors = [
     "#340924",
     "#FB68FF",
@@ -1810,9 +1987,9 @@ function setup() {
     "#E3FFAB",
     "#C3B8A6"
   ];
-  
   const swatchContainer2 = createDiv();
-  swatchContainer2.parent(uiContainer);
+  swatchContainer2
+  .parent(bgGroup);
   swatchContainer2.style("display", "flex");
   swatchContainer2.style("gap", "6px");
   
@@ -1830,24 +2007,6 @@ function setup() {
       backgroundCol = color(c);
     });
   });
-
-  // Additional text color:
-  createP("infoText: color").parent(uiContainer);
-
-  const infoColors = [
-    "#340924",
-    "#FB68FF",
-    "#875EFF",
-    "#FE2C35",
-    "#F14C03",
-    "#E3FFAB",
-    "#C3B8A6"
-  ];
-  
-  const swatchContainer3 = createDiv();
-  swatchContainer3.parent(uiContainer);
-  swatchContainer3.style("display", "flex");
-  swatchContainer3.style("gap", "6px");
   
   infoColors.forEach(c => {
     const btn = createButton("");
@@ -1864,92 +2023,16 @@ function setup() {
     });
   });
 
-  // Number of arms BG1:
-  createP("bgStars1: arms number").parent(uiContainer);
-  armSliderBg1 = createSlider(4, 38, 4, 1);
-  armSliderBg1.input(() => {
-    setArmNr('bg1', armSliderBg1.value());
-  });
-  armSliderBg1.parent(uiContainer);
-  armInputBg1 = createInput('4', 'number');
-  armInputBg1.attribute('min', 4);
-  armInputBg1.attribute('max', 38);
-  armInputBg1.attribute('step', 1);
-  armInputBg1.input(() => {
-    setArmNr('bg1', armInputBg1.value());
-  });
-  armInputBg1.parent(uiContainer);  
+  const bgStarsGroup = createUIGroup("Background stars", uiContainer);
 
-  // Number of arms BG2:
-  createP("bgStars2: arms number").parent(uiContainer);
-  armSliderBg2 = createSlider(4, 38, 7, 1);
-  armSliderBg2.input(() => {
-    setArmNr('bg2', armSliderBg2.value());
-  });
-  armSliderBg2.parent(uiContainer);
-  armInputBg2 = createInput('7', 'number');
-  armInputBg2.attribute('min', 4);
-  armInputBg2.attribute('max', 38);
-  armInputBg2.attribute('step', 1);
-  armInputBg2.input(() => {
-    setArmNr('bg2', armInputBg2.value());
-  });
-  armInputBg2.parent(uiContainer);  
-
-  // Number of arms TXT:
-  createP("textStars: arms number").parent(uiContainer);
-  armSlider = createSlider(4, 38, 4, 1);
-  armSlider.input(() => {
-    setArmNr('text', armSlider.value());
-  });
-  armSlider.parent(uiContainer);
-  armInput = createInput('4', 'number');
-  armInput.attribute('min', 4);
-  armInput.attribute('max', 38);
-  armInput.attribute('step', 1);
-  armInput.input(() => {
-    setArmNr('text', armInput.value());
-  });
-  armInput.parent(uiContainer);  
-
-  createP("textStars: radius1").parent(uiContainer);
-  starRad1Slider = createSlider(1, 100, 5, 0.1);
-  starRad1Slider.input(() => {
-    setRad1(starRad1Slider.value());
-  });
-  starRad1Slider.parent(uiContainer);
-  starRad1Input = createInput('5', 'number');
-  starRad1Input.attribute('min', 1);
-  starRad1Input.attribute('max', 100);
-  starRad1Input.attribute('step', 0.1);
-  starRad1Input.input(() => {
-    setRad1(starRad1Input.value());
-  });
-  starRad1Input.parent(uiContainer); 
-
-  createP("textStars: radius2").parent(uiContainer);
-  starRad2Slider = createSlider(1, 100, 15, 0.1);
-  starRad2Slider.input(() => {
-    setRad2(starRad2Slider.value());
-  });
-  starRad2Slider.parent(uiContainer);
-  starRad2Input = createInput('15', 'number');
-  starRad2Input.attribute('min', 1);
-  starRad2Input.attribute('max', 100);
-  starRad2Input.attribute('step', 0.1);
-  starRad2Input.input(() => {
-    setRad2(starRad2Input.value());
-  });
-  starRad2Input.parent(uiContainer); 
-
-  createP("backgroundStars: ratio").parent(uiContainer);
+  createP("ratio").parent(bgStarsGroup);
   bgStarProbSlider = createSlider(0.0, 1.0, 0.25, 0.05);
   bgStarProbSlider.input(() => {
     setBgRatio(bgStarProbSlider.value());
     bgStarsBufferDirty = true;
     generateBgStars();
   });
-  bgStarProbSlider.parent(uiContainer);
+  bgStarProbSlider.parent(bgStarsGroup);
   bgStarProbInput = createInput('0.25', 'number');
   bgStarProbInput.attribute('min', 0.00);
   bgStarProbInput.attribute('max', 1.00);
@@ -1959,54 +2042,146 @@ function setup() {
     bgStarsBufferDirty = true;
     generateBgStars();
   });
-  bgStarProbInput.parent(uiContainer);
+  bgStarProbInput.parent(bgStarsGroup);
 
-  createP("Additional text styling").parent(uiContainer);
-  addStylingSelect = createSelect();
-  addStylingSelect.option("Style 1");
-  addStylingSelect.option("Style 2");
-  addStylingSelect.changed(() => {
-    if (addStylingSelect.value() === "Style 1") {
-      addStyling = true;
-    } else if (addStylingSelect.value() === "Style 2") {
-      addStyling = false;
-    }
-  });
-  addStylingSelect.parent(uiContainer);
+  const bgRefreshBtn = createButton("Refresh background");
+  bgRefreshBtn.parent(bgStarsGroup);
+  bgRefreshBtn.mousePressed(regenerateBgStarsFrame);
 
-  gridCheckbox = createCheckbox("Grid", false);
-  gridCheckbox.changed(() => showGrid = gridCheckbox.checked());
-  gridCheckbox.parent(uiContainer);
-
-  bgStarsCheckbox = createCheckbox("Background stars", false);
+  bgStarsCheckbox = createCheckbox("show", false);
   bgStarsCheckbox.changed(() => {
     showbgStars = bgStarsCheckbox.checked();
     generateBgStars();
   });
-  
-  bgStarsCheckbox.parent(uiContainer);
+  bgStarsCheckbox.parent(bgStarsGroup);
 
-  textCheckbox = createCheckbox("Text", true);
-  textCheckbox.changed(() => showText = textCheckbox.checked());
-  textCheckbox.parent(uiContainer);
+  const bgStarsGroup1 = createUIGroup("Background stars 1", uiContainer);
+  // Number of arms BG1:
+  createP("arms number")
+  .parent(bgStarsGroup1)
+  .class("ui-label");
+  armSliderBg1 = createSlider(4, 38, 4, 1);
+  armSliderBg1.input(() => {
+    setArmNr('bg1', armSliderBg1.value());
+  });
+  armSliderBg1.parent(bgStarsGroup1);
+  armInputBg1 = createInput('4', 'number');
+  armInputBg1.attribute('min', 4);
+  armInputBg1.attribute('max', 38);
+  armInputBg1.attribute('step', 1);
+  armInputBg1.input(() => {
+    setArmNr('bg1', armInputBg1.value());
+  });
+  armInputBg1.parent(bgStarsGroup1);  
+
+  createP("radius1")
+  .parent(bgStarsGroup1)
+  .class("ui-label");
+  bgStar1Rad1Slider = createSlider(1, 100, 5, 0.1);
+  bgStar1Rad1Slider.input(() => {
+    setRad('bg1Rad1', bgStar1Rad1Slider.value());
+  });
+  bgStar1Rad1Slider.parent(bgStarsGroup1);
+  bgStar1Rad1Input = createInput('5', 'number');
+  bgStar1Rad1Input.attribute('min', 1);
+  bgStar1Rad1Input.attribute('max', 100);
+  bgStar1Rad1Input.attribute('step', 0.1);
+  bgStar1Rad1Input.input(() => {
+    setRad('bg1Rad1', bgStar1Rad1Input.value());
+  });
+  bgStar1Rad1Input.parent(bgStarsGroup1);
+
+  createP("radius2")
+  .parent(bgStarsGroup1)
+  .class("ui-label");
+  bgStar1Rad2Slider = createSlider(1, 100, 5, 0.1);
+  bgStar1Rad2Slider.input(() => {
+    setRad('bg1Rad2', bgStar1Rad2Slider.value());
+  });
+  bgStar1Rad2Slider.parent(bgStarsGroup1);
+  bgStar1Rad2Input = createInput('5', 'number');
+  bgStar1Rad2Input.attribute('min', 1);
+  bgStar1Rad2Input.attribute('max', 100);
+  bgStar1Rad2Input.attribute('step', 0.1);
+  bgStar1Rad2Input.input(() => {
+    setRad('bg1Rad2', bgStar1Rad2Input.value());
+  });
+  bgStar1Rad2Input.parent(bgStarsGroup1);
+
+  const bgStarsGroup2 = createUIGroup("Background stars 2", uiContainer);
+  // Number of arms BG2:
+  createP("arms number")
+  .parent(bgStarsGroup2)
+  .class("ui-label");
+  armSliderBg2 = createSlider(4, 38, 7, 1);
+  armSliderBg2.input(() => {
+    setArmNr('bg2', armSliderBg2.value());
+  });
+  armSliderBg2.parent(bgStarsGroup2);
+  armInputBg2 = createInput('7', 'number');
+  armInputBg2.attribute('min', 4);
+  armInputBg2.attribute('max', 38);
+  armInputBg2.attribute('step', 1);
+  armInputBg2.input(() => {
+    setArmNr('bg2', armInputBg2.value());
+  });
+  armInputBg2.parent(bgStarsGroup2);  
+
+  createP("radius1")
+  .parent(bgStarsGroup2)
+  .class("ui-label");;
+  bgStar2Rad1Slider = createSlider(1, 100, 5, 0.1);
+  bgStar2Rad1Slider.input(() => {
+    setRad('bg2Rad1', bgStar2Rad1Slider.value());
+  });
+  bgStar2Rad1Slider.parent(bgStarsGroup2);
+  bgStar2Rad1Input = createInput('5', 'number');
+  bgStar2Rad1Input.attribute('min', 1);
+  bgStar2Rad1Input.attribute('max', 100);
+  bgStar2Rad1Input.attribute('step', 0.1);
+  bgStar2Rad1Input.input(() => {
+    setRad('bg2Rad1', bgStar2Rad1Input.value());
+  });
+  bgStar2Rad1Input.parent(bgStarsGroup2);
+
+  createP("radius2")
+  .parent(bgStarsGroup2)
+  .class("ui-label");
+  bgStar2Rad2Slider = createSlider(1, 100, 5, 0.1);
+  bgStar2Rad2Slider.input(() => {
+    setRad('bg2Rad2', bgStar2Rad2Slider.value());
+  });
+  bgStar2Rad2Slider.parent(bgStarsGroup2);
+  bgStar2Rad2Input = createInput('5', 'number');
+  bgStar2Rad2Input.attribute('min', 1);
+  bgStar2Rad2Input.attribute('max', 100);
+  bgStar2Rad2Input.attribute('step', 0.1);
+  bgStar2Rad2Input.input(() => {
+    setRad('bg2Rad2', bgStar2Rad2Input.value());
+  });
+  bgStar2Rad2Input.parent(bgStarsGroup2); 
+
+  const animationsGroup = createUIGroup("Animations", uiContainer);
 
   backgroundCheckbox = createCheckbox("Animate background stars", false);
   backgroundCheckbox.changed(() => animateBackground = backgroundCheckbox.checked());
-  backgroundCheckbox.parent(uiContainer);
+  backgroundCheckbox
+  .parent(animationsGroup)
+  .class("ui-label");
 
   bgStarsScaleCheckbox = createCheckbox("Star size animation", false);
-  bgStarsScaleCheckbox.parent(uiContainer);
+  bgStarsScaleCheckbox
+  .parent(animationsGroup)
+  .class("ui-label");
   bgStarsScaleCheckbox.changed(() => {
     scaleBackground = bgStarsScaleCheckbox.checked();
   });
 
   animateCheckbox = createCheckbox("Animate text", false);
-  animateCheckbox.parent(uiContainer);
+  animateCheckbox
+  .parent(animationsGroup)
+  .class("ui-label");
   animateCheckbox.changed(() => animate = animateCheckbox.checked());
-
-  const bgRefreshBtn = createButton("Refresh background");
-  bgRefreshBtn.parent(uiContainer);
-  bgRefreshBtn.mousePressed(regenerateBgStarsFrame);
 
   const saveBtn = createButton("Save PNG");
   saveBtn.parent(uiContainer);
@@ -2099,11 +2274,17 @@ function draw() {
     
     // --- compute animated radii ---
     if (scaleBackground) {
-      animatedBgStarRad1 = starRad1 * (1 + Math.abs(Math.sin(phase)));
-      animatedBgStarRad2 = starRad2 * (1 + Math.abs(Math.sin(phase)));
+      animatedBgStar1Rad1 = bgStar1Rad1 * (1 + Math.abs(Math.sin(phase)));
+      animatedBgStar1Rad2 = bgStar1Rad2 * (1 + Math.abs(Math.sin(phase)));
+
+      animatedBgStar2Rad1 = bgStar2Rad1 * (1 + Math.abs(Math.sin(phase)));
+      animatedBgStar2Rad2 = bgStar2Rad2 * (1 + Math.abs(Math.sin(phase)));
     } else {
-      animatedBgStarRad1 = starRad1;
-      animatedBgStarRad2 = starRad2;
+      animatedBgStar1Rad1 = bgStar1Rad1;
+      animatedBgStar1Rad2 = bgStar1Rad2;
+
+      animatedBgStar2Rad1 = bgStar2Rad1;
+      animatedBgStar2Rad2 = bgStar2Rad2;
     }
   
     // --- decide redraw strategy ---
