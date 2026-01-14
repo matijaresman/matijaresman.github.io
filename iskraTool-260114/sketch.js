@@ -1851,7 +1851,9 @@ function setup() {
 
   textCheckbox = createCheckbox("show", true);
   textCheckbox.changed(() => showText = textCheckbox.checked());
-  textCheckbox.parent(textGroup);
+  textCheckbox
+  .parent(textGroup)
+  .class("ui-label");
 
   // ADDITIONAL TEXT:
   const additionalTextGroup = createUIGroup("Additional text", uiContainer);
