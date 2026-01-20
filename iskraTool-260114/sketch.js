@@ -10,16 +10,24 @@ let logo2;
 
 let starRad1 = 5;
 let starRad2 = 15;
+
 let bgStar1Rad1 = 5;
 let bgStar1Rad2 = 15;
+
 let bgStar2Rad1 = 5;
 let bgStar2Rad2 = 15;
+
+let bgStar3Rad1 = 5;
+let bgStar3Rad2 = 15;
+
 let armNr = 4;
 let armNrBg1 = 4;
 let armNrBg2 = 7;
+let armNrBg3 = 11;
 
 let bgStars1 = [];
 let bgStars2 = [];
+let bgStars3 = [];
 
 let animate = false;
 let scaleBackground = false;
@@ -66,6 +74,11 @@ let addStyling = true;
 
 let bgStarNoiseScale = 0.15; // spatial frequency
 let bgStarNoiseZ = 0;       // optional animation
+
+let bgStarNoiseMode = "random"; // "perlin" | "random"
+
+let bgStarSplit1 = 0.33;
+let bgStarSplit2 = 0.66;
 
 const letters = {
   a : [
@@ -1290,6 +1303,7 @@ function bgAnim() {
 function generateBgStars() {
   bgStars1 = [];
   bgStars2 = [];
+  bgStars3 = [];
 
   const letterBoxes = showText
   ? getLetterBoundingBoxes(textInput)
@@ -1297,6 +1311,7 @@ function generateBgStars() {
 
   const rotation1 = getStarRotation(armNrBg1);
   const rotation2 = getStarRotation(armNrBg2);
+  const rotation3 = getStarRotation(armNrBg3);
   for (let i = 0; i < colNum; i++) {
     for (let j = 0; j < rowNum; j++) {
 
@@ -1326,38 +1341,38 @@ function generateBgStars() {
         if (insideLetter) continue;
       }
 
-      // --- NOISE-BASED DENSITY ---
-      const n = noise(
-        i * bgStarNoiseScale,
-        j * bgStarNoiseScale,
-        bgStarNoiseZ
-      );
+      let v;
 
-      // probability slider controls threshold
-      if (n > 1.0 - bgStarProb) {
+      if (bgStarNoiseMode === "perlin") {
+        v = noise(
+          i * bgStarNoiseScale,
+          j * bgStarNoiseScale,
+          bgStarNoiseZ
+        );
+      } else {
+        v = random();
+      }
+      
+      if (v < bgStarSplit1) {
         bgStars1.push({
           x: i * colWidth + colWidth / 2,
           y: yPx,
           rot: rotation1
         });
-      } else {
+      } else if (v < bgStarSplit2) {
         bgStars2.push({
           x: i * colWidth + colWidth / 2,
           y: yPx,
           rot: rotation2
-        }); 
-      }
-
-      // Random density (ONCE)
-      /*
-      if (random() < bgStarProb) {
-        bgStars.push({
+        });
+      } else {
+        bgStars3.push({
           x: i * colWidth + colWidth / 2,
           y: yPx,
-          rot: rotation
+          rot: rotation3
         });
-      }
-      */
+      }      
+      
     }
   }
 }
@@ -1380,6 +1395,14 @@ function drawBgStarsLive() {
     translate(s.x, s.y);
     rotate(s.rot);
     star(0, 0, animatedBgStar2Rad1, animatedBgStar2Rad2, armNrBg2);
+    pop();
+  }
+
+  for (let s of bgStars3) {
+    push();
+    translate(s.x, s.y);
+    rotate(s.rot);
+    star(0, 0, animatedBgStar3Rad1, animatedBgStar3Rad2, armNrBg3);
     pop();
   }
 
@@ -1458,6 +1481,13 @@ function setArmNr(target, value) {
       armInputBg2.value(value);
       bgStarsBufferDirty = true;
       break;
+
+    case 'bg3':
+      armNrBg3 = value;
+      armSliderBg3.value(value);
+      armInputBg3.value(value);
+      bgStarsBufferDirty = true;
+      break;
   }
 }
 
@@ -1533,6 +1563,22 @@ function setRad(target, value) {
       bgStar2Rad2 = value;
       bgStar2Rad2Slider.value(value);
       bgStar2Rad2Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'bg3Rad1' :
+      bgStar3Rad1 = value;
+      bgStar3Rad1Slider.value(value);
+      bgStar3Rad1Input.value(value);
+      bgStarsBufferDirty = true;
+      generateBgStars();
+      break;
+
+    case 'bg3Rad2' :
+      bgStar3Rad2 = value;
+      bgStar3Rad2Slider.value(value);
+      bgStar3Rad2Input.value(value);
       bgStarsBufferDirty = true;
       generateBgStars();
       break;
@@ -1656,6 +1702,19 @@ function drawSVGToCanvas(x, y, w, h) {
   img.src = url;
 }
 
+function updateSplit1(v) {
+  bgStarSplit1 = min(v, bgStarSplit2 - 0.01);
+  bgSplit1Slider.value(bgStarSplit1);
+  bgSplit1Input.value(bgStarSplit1.toFixed(2));
+  generateBgStars();
+}
+
+function updateSplit2(v) {
+  bgStarSplit2 = max(v, bgStarSplit1 + 0.01);
+  bgSplit2Slider.value(bgStarSplit2);
+  bgSplit2Input.value(bgStarSplit2.toFixed(2));
+  generateBgStars();
+}
 
 // Save frame function:
 function saveFrameAsPNG() {
@@ -1990,7 +2049,7 @@ function setup() {
   });
   
 
-  const bgGroup = createUIGroup("Background stars", uiContainer);
+  const bgGroup = createUIGroup("Background", uiContainer);
   //Background color:
   const backgroundColors = [
     "#340924",
@@ -2039,6 +2098,27 @@ function setup() {
 
   const bgStarsGroup = createUIGroup("Background stars", uiContainer);
 
+  createP("noise texture")
+  .parent(bgStarsGroup)
+  .class("ui-label");
+  noiseSelect = createSelect();
+  noiseSelect.option("random");
+  noiseSelect.option("perlin");
+  noiseSelect.changed(() => {
+    bgStarNoiseMode = noiseSelect.value();
+  
+    if (bgStarNoiseMode === "random") {
+      animateBackground = false;
+      animateCheckbox.checked(false);
+    }
+  
+    bgStarsBufferDirty = true;
+    generateBgStars();
+  });
+  
+  noiseSelect.parent(bgStarsGroup);
+
+  /*
   createP("ratio")
   .parent(bgStarsGroup)
   .class("ui-label");
@@ -2059,7 +2139,54 @@ function setup() {
     generateBgStars();
   });
   bgStarProbInput.parent(bgStarsGroup);
+  */
 
+  createP("background stars distribution")
+  .parent(bgStarsGroup)
+  .class("ui-label");
+
+  // ---- Split 1 ----
+  const split1Row = createDiv().parent(bgStarsGroup);
+  split1Row.style("display", "flex");
+  split1Row.style("gap", "8px");
+  split1Row.style("align-items", "center");
+  
+  bgSplit1Slider = createSlider(0, 1, bgStarSplit1, 0.01);
+  bgSplit1Slider.parent(split1Row);
+  bgSplit1Slider.input(() => {
+    updateSplit1(bgSplit1Slider.value());
+  });
+  
+  bgSplit1Input = createInput(bgStarSplit1.toFixed(2), "number");
+  bgSplit1Input.attribute("min", 0);
+  bgSplit1Input.attribute("max", 1);
+  bgSplit1Input.attribute("step", 0.01);
+  bgSplit1Input.parent(split1Row);
+  bgSplit1Input.input(() => {
+    updateSplit1(parseFloat(bgSplit1Input.value()));
+  });
+  
+  // ---- Split 2 ----
+  const split2Row = createDiv().parent(bgStarsGroup);
+  split2Row.style("display", "flex");
+  split2Row.style("gap", "8px");
+  split2Row.style("align-items", "center");
+  
+  bgSplit2Slider = createSlider(0, 1, bgStarSplit2, 0.01);
+  bgSplit2Slider.parent(split2Row);
+  bgSplit2Slider.input(() => {
+    updateSplit2(bgSplit2Slider.value());
+  });
+  
+  bgSplit2Input = createInput(bgStarSplit2.toFixed(2), "number");
+  bgSplit2Input.attribute("min", 0);
+  bgSplit2Input.attribute("max", 1);
+  bgSplit2Input.attribute("step", 0.01);
+  bgSplit2Input.parent(split2Row);
+  bgSplit2Input.input(() => {
+    updateSplit2(parseFloat(bgSplit2Input.value()));
+  });
+  
   const bgRefreshBtn = createButton("Refresh background");
   bgRefreshBtn
   .parent(bgStarsGroup);
@@ -2180,6 +2307,59 @@ function setup() {
   });
   bgStar2Rad2Input.parent(bgStarsGroup2); 
 
+  const bgStarsGroup3 = createUIGroup("Background stars 3", uiContainer);
+  // Number of arms BG3:
+  createP("arms number")
+  .parent(bgStarsGroup3)
+  .class("ui-label");
+  armSliderBg3 = createSlider(4, 38, 11, 1);
+  armSliderBg3.input(() => {
+    setArmNr('bg3', armSliderBg3.value());
+  });
+  armSliderBg3.parent(bgStarsGroup3);
+  armInputBg3 = createInput('11', 'number');
+  armInputBg3.attribute('min', 4);
+  armInputBg3.attribute('max', 38);
+  armInputBg3.attribute('step', 1);
+  armInputBg3.input(() => {
+    setArmNr('bg3', armInputBg3.value());
+  });
+  armInputBg3.parent(bgStarsGroup3);  
+
+  createP("radius1")
+  .parent(bgStarsGroup3)
+  .class("ui-label");;
+  bgStar3Rad1Slider = createSlider(1, 100, 5, 0.1);
+  bgStar3Rad1Slider.input(() => {
+    setRad('bg3Rad1', bgStar3Rad1Slider.value());
+  });
+  bgStar3Rad1Slider.parent(bgStarsGroup3);
+  bgStar3Rad1Input = createInput('5', 'number');
+  bgStar3Rad1Input.attribute('min', 1);
+  bgStar3Rad1Input.attribute('max', 100);
+  bgStar3Rad1Input.attribute('step', 0.1);
+  bgStar3Rad1Input.input(() => {
+    setRad('bg3Rad1', bgStar3Rad1Input.value());
+  });
+  bgStar3Rad1Input.parent(bgStarsGroup3);
+
+  createP("radius2")
+  .parent(bgStarsGroup3)
+  .class("ui-label");
+  bgStar3Rad2Slider = createSlider(1, 100, 15, 0.1);
+  bgStar3Rad2Slider.input(() => {
+    setRad('bg3Rad2', bgStar3Rad2Slider.value());
+  });
+  bgStar3Rad2Slider.parent(bgStarsGroup3);
+  bgStar3Rad2Input = createInput('15', 'number');
+  bgStar3Rad2Input.attribute('min', 1);
+  bgStar3Rad2Input.attribute('max', 100);
+  bgStar3Rad2Input.attribute('step', 0.1);
+  bgStar3Rad2Input.input(() => {
+    setRad('bg3Rad2', bgStar3Rad2Input.value());
+  });
+  bgStar3Rad2Input.parent(bgStarsGroup3); 
+
   const animationsGroup = createUIGroup("Animations", uiContainer);
 
   backgroundCheckbox = createCheckbox("Animate background stars", false);
@@ -2293,27 +2473,38 @@ function draw() {
     
     // --- compute animated radii ---
     if (scaleBackground) {
+
       animatedBgStar1Rad1 = bgStar1Rad1 * (0.25 + Math.abs(Math.sin(phase * 3)));
       animatedBgStar1Rad2 = bgStar1Rad2 * (0.25 + Math.abs(Math.sin(phase * 3)));
 
       animatedBgStar2Rad1 = bgStar2Rad1 * (0.25 + Math.abs(Math.sin(phase)));
       animatedBgStar2Rad2 = bgStar2Rad2 * (0.25 + Math.abs(Math.sin(phase)));
+
+      animatedBgStar3Rad1 = bgStar3Rad1 * (0.25 + Math.abs(Math.sin(phase * 3)));
+      animatedBgStar3Rad2 = bgStar3Rad2 * (0.25 + Math.abs(Math.sin(phase * 3)));
+
     } else {
+
       animatedBgStar1Rad1 = bgStar1Rad1;
       animatedBgStar1Rad2 = bgStar1Rad2;
 
       animatedBgStar2Rad1 = bgStar2Rad1;
       animatedBgStar2Rad2 = bgStar2Rad2;
+
+      animatedBgStar3Rad1 = bgStar3Rad1;
+      animatedBgStar3Rad2 = bgStar3Rad2;
+
     }
   
     // --- decide redraw strategy ---
     if (animateBackground || scaleBackground || !animateBackground && !scaleBackground) {
   
       // regenerate ONLY if animateBackground is on
-      if (animateBackground) {
+      if (animateBackground && bgStarNoiseMode === "perlin") {
         // advance noise space every frame
         bgStarNoiseZ += 0.01;
-      
+        generateBgStars();
+      } else if (animateBackground && bgStarNoiseMode === "random") {
         generateBgStars();
       }
   
