@@ -3,7 +3,7 @@
     --clr-light: white;
     --clr-accent: #e11d48;
     --sidebar--height: 200px;
-    --sidebar--width: 1500px;
+    --sidebar--width: 1600px;
     --about--height: 32px;
 }
 
@@ -325,6 +325,7 @@ output {
 .close-btn:hover {
     color: black;
 }
+
 
 
 
