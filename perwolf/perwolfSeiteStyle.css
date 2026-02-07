@@ -232,6 +232,7 @@ body {
     height: var(--sidebar--height);
     width: var(--sidebar--width);
     overflow: hidden;
+    background-color: rgba(68,214,44, 0.8);
 }
 
 .sidebar-about {
@@ -325,6 +326,7 @@ output {
 .close-btn:hover {
     color: black;
 }
+
 
 
 
