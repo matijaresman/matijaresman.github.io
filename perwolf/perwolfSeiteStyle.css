@@ -247,7 +247,6 @@ body {
 }
 
 .sidebar_section {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -326,6 +325,7 @@ output {
 .close-btn:hover {
     color: black;
 }
+
 
 
 
