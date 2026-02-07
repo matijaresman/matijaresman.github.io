@@ -244,15 +244,13 @@ body {
     z-index: 2;
     justify-content: flex-start;
 }
+
 .sidebar_section {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px;
-    border-bottom: 2px;
-    border-bottom-color: black;
-    flex: 0 0 auto;
     box-sizing: border-box;
 }
 
@@ -327,6 +325,7 @@ output {
 .close-btn:hover {
     color: black;
 }
+
 
 
 
