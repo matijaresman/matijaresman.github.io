@@ -21,8 +21,8 @@
 }
 
 .styled-button {
-    width: 100px;
-    height: 44px;
+    width: 200px;
+    height: 50px;
     background-color: #DB3EB1;
     border: none;
     color: black;
@@ -335,5 +335,6 @@ output {
 .close-btn:hover {
     color: black;
 }
+
 
 
