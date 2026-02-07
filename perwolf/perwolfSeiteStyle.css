@@ -52,8 +52,8 @@
     word-spacing: 1.4px;
     font-weight: 650;
     font-family: "FragmentMono";
-    width: 100px;
-    height: 44px;
+    width: 200px;
+    height: 50px;
     background-color: rgba(77,77,255);
     border: none;
     color: black;
@@ -325,6 +325,7 @@ output {
 .close-btn:hover {
     color: black;
 }
+
 
 
 
