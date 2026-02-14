@@ -317,6 +317,10 @@ function setRad(target, value) {
   generateBgStars();
 }
 
+function exportToSVG() {
+  save("zariste-1920x1005.svg");
+}
+
 //=============================================
 
 // SETUP FUNCTION START:
@@ -326,7 +330,7 @@ function setup() {
   const w = container.clientWidth;
   const h = container.clientHeight;
 
-  const cnv = createCanvas(CANVAS_W, CANVAS_H);
+  const cnv = createCanvas(CANVAS_W, CANVAS_H, SVG);
   cnv.parent('canvas-wrapper');
   frameRate(10);
 
@@ -573,21 +577,11 @@ bgColors.forEach(c => {
     });
   });
 
-  const animationsGroup = createUIGroup("Animations", uiContainer);
-
-  backgroundCheckbox = createCheckbox("Animate", false);
-  backgroundCheckbox.changed(() => animateBackground = backgroundCheckbox.checked());
-  backgroundCheckbox
-  .parent(animationsGroup)
-  .class("ui-label");
-
-  bgStarsScaleCheckbox = createCheckbox("Animate Size", false);
-  bgStarsScaleCheckbox
-  .parent(animationsGroup)
-  .class("ui-label");
-  bgStarsScaleCheckbox.changed(() => {
-    scaleBackground = bgStarsScaleCheckbox.checked();
-  });
+  const exportGtoup = createUIGroup("Export", uiContainer);
+  const exportBtn = createButton("Export SVG");
+  exportBtn
+  .parent(exportGtoup);
+  exportBtn.mousePressed(exportToSVG);
 
   /*
 
