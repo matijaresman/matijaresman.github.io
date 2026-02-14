@@ -26,7 +26,7 @@ let gridCheckbox;
 let scaleBackground = false;
 
 const CANVAS_W = 1080;
-const CANVAS_H = 1350;
+const CANVAS_H = 1920;
 
 let vidWidth = CANVAS_W;
 let vidHeight = CANVAS_H;
@@ -75,7 +75,7 @@ function drawBackground() {
 
   if (backgroundStyle === 1) {
     barW = 1080 / 5.0;
-    barH = 1350 / 101.0;
+    barH = 1920 / 101.0;
   
     for(let i = 0; i < 101; i++) {
       for(let j = 0; j < 5; j++) {
@@ -113,7 +113,7 @@ function drawBackground() {
     barH = 30;
 
     for(let i = 0; i < 36; i++) {
-      for(let j = 0; j < 45; j++) {
+      for(let j = 0; j < 64; j++) {
           if(j % 2 == 0) {
               if(i % 2 == 0) {
                   fill(bgColor1);
@@ -318,7 +318,7 @@ function setRad(target, value) {
 }
 
 function exportToSVG() {
-  save("zariste-1080x1350.svg");
+  save("zariste-1080x1920.svg");
 }
 
 //=============================================
@@ -582,6 +582,13 @@ bgColors.forEach(c => {
   exportBtn
   .parent(exportGtoup);
   exportBtn.mousePressed(exportToSVG);
+
+  /*
+
+  const saveBtn = createButton("Save PNG");
+  saveBtn.parent(uiContainer);
+  saveBtn.mousePressed(saveFrameAsPNG);
+  */
 
 }
 

@@ -25,8 +25,8 @@ let gridCheckbox;
 
 let scaleBackground = false;
 
-const CANVAS_W = 1080;
-const CANVAS_H = 1350;
+const CANVAS_W = 1920;
+const CANVAS_H = 1005;
 
 let vidWidth = CANVAS_W;
 let vidHeight = CANVAS_H;
@@ -74,11 +74,11 @@ function drawBackground() {
   let barH;
 
   if (backgroundStyle === 1) {
-    barW = 1080 / 5.0;
-    barH = 1350 / 101.0;
+    barW = width / 7.0;
+    barH = height / 101.0;
   
     for(let i = 0; i < 101; i++) {
-      for(let j = 0; j < 5; j++) {
+      for(let j = 0; j < 7; j++) {
           if(j % 2 == 0) {
               if(i % 2 == 0) {
                   fill(bgColor1);
@@ -97,10 +97,10 @@ function drawBackground() {
       }
     }
   } else if (backgroundStyle === 2) {
-    barW = 1080 / 86.0;
+    barW = width / 120.0;
     barH = height;
 
-    for (let i = 0; i < 86; i++) {
+    for (let i = 0; i < 120; i++) {
       if(i % 2 == 0) {
         fill(bgColor2);
       } else {
@@ -109,11 +109,11 @@ function drawBackground() {
       rect(i * barW, 0, barW, barH);
     }
   } else if (backgroundStyle === 3) {
-    barW = 30;
-    barH = 30;
+    barW = 15;
+    barH = 15;
 
-    for(let i = 0; i < 36; i++) {
-      for(let j = 0; j < 45; j++) {
+    for(let i = 0; i < 128; i++) {
+      for(let j = 0; j < 67; j++) {
           if(j % 2 == 0) {
               if(i % 2 == 0) {
                   fill(bgColor1);
@@ -317,10 +317,6 @@ function setRad(target, value) {
   generateBgStars();
 }
 
-function exportToSVG() {
-  save("zariste-1080x1350.svg");
-}
-
 //=============================================
 
 // SETUP FUNCTION START:
@@ -330,7 +326,7 @@ function setup() {
   const w = container.clientWidth;
   const h = container.clientHeight;
 
-  const cnv = createCanvas(CANVAS_W, CANVAS_H, SVG);
+  const cnv = createCanvas(CANVAS_W, CANVAS_H);
   cnv.parent('canvas-wrapper');
   frameRate(10);
 
@@ -577,11 +573,28 @@ bgColors.forEach(c => {
     });
   });
 
-  const exportGtoup = createUIGroup("Export", uiContainer);
-  const exportBtn = createButton("Export SVG");
-  exportBtn
-  .parent(exportGtoup);
-  exportBtn.mousePressed(exportToSVG);
+  const animationsGroup = createUIGroup("Animations", uiContainer);
+
+  backgroundCheckbox = createCheckbox("Animate", false);
+  backgroundCheckbox.changed(() => animateBackground = backgroundCheckbox.checked());
+  backgroundCheckbox
+  .parent(animationsGroup)
+  .class("ui-label");
+
+  bgStarsScaleCheckbox = createCheckbox("Animate Size", false);
+  bgStarsScaleCheckbox
+  .parent(animationsGroup)
+  .class("ui-label");
+  bgStarsScaleCheckbox.changed(() => {
+    scaleBackground = bgStarsScaleCheckbox.checked();
+  });
+
+  /*
+
+  const saveBtn = createButton("Save PNG");
+  saveBtn.parent(uiContainer);
+  saveBtn.mousePressed(saveFrameAsPNG);
+  */
 
 }
 
