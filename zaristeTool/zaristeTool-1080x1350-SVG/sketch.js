@@ -318,7 +318,7 @@ function setRad(target, value) {
 }
 
 function exportToSVG() {
-  save("zarista.svg");
+  save("zariste.svg");
 }
 
 //=============================================
