@@ -318,15 +318,19 @@ function setRad(target, value) {
 }
 
 function exportToSVG() {
-  noLoop();
 
+  // make sure everything is freshly generated
+  generateBgStars();
+
+  // clear SVG renderer
   clear();
+
+  // draw exactly one clean frame
   drawBackground();
   drawBgStarsLive();
 
+  // save clean SVG
   save("zariste-1920x1005.svg");
-
-  loop();
 }
 
 //=============================================
@@ -340,7 +344,8 @@ function setup() {
 
   const cnv = createCanvas(CANVAS_W, CANVAS_H, SVG);
   cnv.parent('canvas-wrapper');
-  frameRate(10);
+  //frameRate(10);
+  noLoop();
 
   updateCanvasScale();
   regenerateBgStarsFrame();
@@ -543,7 +548,10 @@ bgColors.forEach(c => {
   .parent(bgStarsGroup1)
   .class("ui-label");
   bgStar1Rad1Slider = createSlider(1, 100, 10, 0.1);
-  bgStar1Rad1Slider.input(() => setStarSize(bgStar1Rad1Slider.value()));
+  bgStar1Rad1Slider.input(() => {
+    setStarSize(bgStar1Rad1Slider.value());
+    redraw();
+  });
   bgStar1Rad1Slider.parent(bgStarsGroup1);
   bgStar1Rad1Input = createInput('5', 'number');
   bgStar1Rad1Input.attribute('min', 1);
@@ -607,6 +615,7 @@ bgColors.forEach(c => {
 // DRAW FUNCTION START
 
 function draw() {
+  clear();
   drawBackground();
 
   if (showGrid) drawGrid();
