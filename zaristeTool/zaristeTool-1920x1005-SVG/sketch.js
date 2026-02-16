@@ -318,7 +318,15 @@ function setRad(target, value) {
 }
 
 function exportToSVG() {
+  noLoop();
+
+  clear();
+  drawBackground();
+  drawBgStarsLive();
+
   save("zariste-1920x1005.svg");
+
+  loop();
 }
 
 //=============================================
