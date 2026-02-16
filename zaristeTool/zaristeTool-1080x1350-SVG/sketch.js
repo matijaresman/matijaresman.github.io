@@ -318,6 +318,18 @@ function setRad(target, value) {
 }
 
 function exportToSVG() {
+
+  // make sure everything is freshly generated
+  generateBgStars();
+
+  // clear SVG renderer
+  clear();
+
+  // draw exactly one clean frame
+  drawBackground();
+  drawBgStarsLive();
+
+  // save clean SVG
   save("zariste-1080x1350.svg");
 }
 
@@ -332,7 +344,8 @@ function setup() {
 
   const cnv = createCanvas(CANVAS_W, CANVAS_H, SVG);
   cnv.parent('canvas-wrapper');
-  frameRate(10);
+  //frameRate(10);
+  noLoop();
 
   updateCanvasScale();
   regenerateBgStarsFrame();
@@ -391,6 +404,7 @@ function setup() {
     rowHeight = vidHeight / rowNum;
 
     generateBgStars();
+    redraw();
   });
   gridSelect
   .parent(gridGroup)
@@ -411,6 +425,7 @@ function setup() {
   bgDropdown.selected('1');
   bgDropdown.changed(() => {
     backgroundStyle = int(bgDropdown.value());
+    redraw();
   });
   bgDropdown
   .parent(backgroundGroup)
@@ -437,7 +452,8 @@ bgColors.forEach(c => {
 
   btn.mousePressed(() => {
     bgColor1 = c;
-    drawBackground(); // immediately redraw background
+    drawBackground();
+    redraw();
   });
 });
 
@@ -462,7 +478,8 @@ bgColors.forEach(c => {
 
   btn.mousePressed(() => {
     bgColor2 = c;
-    drawBackground(); // immediately redraw background
+    drawBackground();
+    redraw();
   });
 });
 
@@ -485,7 +502,8 @@ bgColors.forEach(c => {
   
       bgStarsBufferDirty = true;
       generateBgStars();
-      drawBgStarsLive(); // force redraw immediately
+      drawBgStarsLive();
+      redraw();
   });
   
   noiseSelect.parent(bgStarsGroup);
@@ -502,19 +520,28 @@ bgColors.forEach(c => {
   
   bgSplit1Slider = createSlider(0, 1, bgStarSplit1, 0.01);
   bgSplit1Slider.parent(split1Row);
-  bgSplit1Slider.input(() => setBgSplit1(bgSplit1Slider.value()));
+  bgSplit1Slider.input(() => {
+    setBgSplit1(bgSplit1Slider.value());
+    redraw();
+  });
   
   bgSplit1Input = createInput(bgStarSplit1.toFixed(2), "number");
   bgSplit1Input.attribute("min", 0);
   bgSplit1Input.attribute("max", 1);
   bgSplit1Input.attribute("step", 0.01);
   bgSplit1Input.parent(split1Row);
-  bgSplit1Input.input(() => setBgSplit1(parseFloat(bgSplit1Input.value())));
+  bgSplit1Input.input(() => {
+    setBgSplit1(parseFloat(bgSplit1Input.value()));
+    redraw();
+  });
   
   const bgRefreshBtn = createButton("Refresh");
   bgRefreshBtn
   .parent(bgStarsGroup);
-  bgRefreshBtn.mousePressed(regenerateBgStarsFrame);
+  bgRefreshBtn.mousePressed(() => {
+    regenerateBgStarsFrame();
+    redraw();
+  });
 
   const bgStarsGroup1 = createUIGroup("Pixels", uiContainer);
   // Number of arms BG1:
@@ -522,26 +549,38 @@ bgColors.forEach(c => {
   .parent(bgStarsGroup1)
   .class("ui-label");
   armSliderBg1 = createSlider(3, 38, 4, 1);
-  armSliderBg1.input(() => setArmNrUI(armSliderBg1.value()));
+  armSliderBg1.input(() => {
+    setArmNrUI(armSliderBg1.value());
+    redraw();
+  });
   armSliderBg1.parent(bgStarsGroup1);
   armInputBg1 = createInput('4', 'number');
   armInputBg1.attribute('min', 3);
   armInputBg1.attribute('max', 38);
   armInputBg1.attribute('step', 1);
-  armInputBg1.input(() => setArmNrUI(armInputBg1.value()));
+  armInputBg1.input(() => {
+    setArmNrUI(armInputBg1.value());
+    redraw();
+  });
   armInputBg1.parent(bgStarsGroup1);  
 
   createP("size")
   .parent(bgStarsGroup1)
   .class("ui-label");
   bgStar1Rad1Slider = createSlider(1, 100, 10, 0.1);
-  bgStar1Rad1Slider.input(() => setStarSize(bgStar1Rad1Slider.value()));
+  bgStar1Rad1Slider.input(() => {
+    setStarSize(bgStar1Rad1Slider.value());
+    redraw();
+  });
   bgStar1Rad1Slider.parent(bgStarsGroup1);
   bgStar1Rad1Input = createInput('5', 'number');
   bgStar1Rad1Input.attribute('min', 1);
   bgStar1Rad1Input.attribute('max', 100);
   bgStar1Rad1Input.attribute('step', 0.1);
-  bgStar1Rad1Input.input(() => setStarSize(parseFloat(bgStar1Rad1Input.value())));
+  bgStar1Rad1Input.input(() => {
+    setStarSize(parseFloat(bgStar1Rad1Input.value()));
+    redraw();
+  });
   bgStar1Rad1Input.parent(bgStarsGroup1);
 
   createP("stars color")
