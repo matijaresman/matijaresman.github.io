@@ -40,6 +40,9 @@ let bgDropdown;
 var colWidth = vidWidth / colNum;
 var rowHeight = vidHeight / rowNum;
 
+let gradientBuffer;
+let starMaskBuffer;
+
 const bgColors = [
   "#FF0000",
   "#D6ED00",
@@ -317,6 +320,48 @@ function setRad(target, value) {
   generateBgStars();
 }
 
+function drawGradientToBuffer() {
+  gradientBuffer.clear();
+
+  let cTop = color(255);      // white
+  let cBottom = color(starCol); // selected star color
+
+  for (let y = 0; y < height; y++) {
+    let t = y / height;
+    let c = lerpColor(cTop, cBottom, t);
+    gradientBuffer.stroke(c);
+    gradientBuffer.line(0, y, width, y);
+  }
+}
+
+function drawStarsToMask() {
+  starMaskBuffer.clear();
+  starMaskBuffer.push();
+
+  starMaskBuffer.fill(255);
+  starMaskBuffer.noStroke();
+
+  for (let s of bgStars1) {
+    starMaskBuffer.push();
+    starMaskBuffer.translate(s.x, s.y);
+    starMaskBuffer.rotate(s.rot);
+    starMaskBuffer.ellipseMode(CENTER);
+
+    let r = scaleBackground ? animatedBgStar1Rad1 : bgStar1Rad1;
+    let angle = TWO_PI / armNrBg1;
+
+    for (let a = 0; a < TWO_PI; a += angle) {
+      let cx = cos(a) * r;
+      let cy = sin(a) * r;
+      starMaskBuffer.ellipse(cx, cy, r * 2, r * 2);
+    }
+
+    starMaskBuffer.pop();
+  }
+
+  starMaskBuffer.pop();
+}
+
 //=============================================
 
 // SETUP FUNCTION START:
@@ -330,13 +375,12 @@ function setup() {
   cnv.parent('canvas-wrapper');
   frameRate(10);
 
+  gradientBuffer = createGraphics(width, height);
+  starMaskBuffer = createGraphics(width, height);
+
   updateCanvasScale();
   regenerateBgStarsFrame();
 
-  /*
-  bgStarsBuffer = createGraphics(CANVAS_W, CANVAS_H);
-  bgStarsBuffer.pixelDensity(pixelDensity());
-*/
   noiseDetail(4, 0.5);
 
   // UI Menu:
@@ -568,7 +612,7 @@ bgColors.forEach(c => {
     btn.mousePressed(() => {
       starCol = color(c);
       if (!scaleBackground && !animateBackground) {
-        drawBgStarsLive(); // redraw background stars once with new color
+        drawBgStarsLive();
       }
     });
   });
@@ -589,13 +633,6 @@ bgColors.forEach(c => {
     scaleBackground = bgStarsScaleCheckbox.checked();
   });
 
-  /*
-
-  const saveBtn = createButton("Save PNG");
-  saveBtn.parent(uiContainer);
-  saveBtn.mousePressed(saveFrameAsPNG);
-  */
-
 }
 
 //SETUP FUNCTION END
@@ -608,8 +645,7 @@ function draw() {
   drawBackground();
 
   if (showGrid) drawGrid();
-    
-    // --- compute animated radii ---
+
     if (scaleBackground) {
       animatedBgStar1Rad1 = bgStar1Rad1 * (0.25 + Math.abs(Math.sin(phase * 3)));
 
@@ -618,23 +654,25 @@ function draw() {
 
     }
   
-    // --- decide redraw strategy ---
     if (animateBackground || scaleBackground || !animateBackground && !scaleBackground) {
   
-      // regenerate ONLY if animateBackground is on
       if (animateBackground && bgStarNoiseMode === "perlin") {
-        // advance noise space every frame
         bgStarNoiseZ += 0.01;
         generateBgStars();
       } else if (animateBackground && bgStarNoiseMode === "random") {
         generateBgStars();
       }
   
-      // always live-draw when either flag is true
-      drawBgStarsLive();
+    drawGradientToBuffer();
+    drawStarsToMask();
+
+    gradientBuffer.drawingContext.globalCompositeOperation = 'destination-in';
+    gradientBuffer.image(starMaskBuffer, 0, 0);
+    gradientBuffer.drawingContext.globalCompositeOperation = 'source-over';
+
+    image(gradientBuffer, 0, 0);
   
     } else {
-      // fully static → buffer
       if (bgStarsBufferDirty) {
         bgStarsBuffer.clear();
         bgStarsBuffer.background(0, 0);
