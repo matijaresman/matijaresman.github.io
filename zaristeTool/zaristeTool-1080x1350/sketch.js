@@ -662,15 +662,15 @@ function draw() {
       } else if (animateBackground && bgStarNoiseMode === "random") {
         generateBgStars();
       }
-  
-    drawGradientToBuffer();
-    drawStarsToMask();
 
-    gradientBuffer.drawingContext.globalCompositeOperation = 'destination-in';
-    gradientBuffer.image(starMaskBuffer, 0, 0);
-    gradientBuffer.drawingContext.globalCompositeOperation = 'source-over';
+      drawGradientToBuffer();
+      drawStarsToMask();
 
-    image(gradientBuffer, 0, 0);
+      gradientBuffer.drawingContext.globalCompositeOperation = 'destination-in';
+      gradientBuffer.image(starMaskBuffer, 0, 0);
+      gradientBuffer.drawingContext.globalCompositeOperation = 'source-over';
+
+      image(gradientBuffer, 0, 0);
   
     } else {
       if (bgStarsBufferDirty) {
