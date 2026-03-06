@@ -1,7 +1,7 @@
 let font;
 let fSize = 200;
 let outline = 1;
-let msg = 'Welcome! :)';
+let msg = 'Welcome :)';
 let fontPath;
 let noiseScale = 1;
 let noiseStrength = 50;
@@ -30,6 +30,7 @@ function loadDefaultFont(){
 }
 
 function draw() {
+    drawingContext.setLineDash([]);
     clear();
     if (!font) return;
     background(255);
@@ -353,5 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateOutput('nSt', document.getElementById('nSt').value);
 
 });
+
 
 
