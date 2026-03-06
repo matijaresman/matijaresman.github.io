@@ -6,13 +6,9 @@ let fontPath;
 let noiseScale = 1;
 let noiseStrength = 50;
 
-let offsetX = 0;
-let offsetY = 0;
-
 function setup() {
     let cnv = createCanvas(800, 200, SVG);
     cnv.parent('canvas-container');
-    noLoop();
     loadDefaultFont();
 }
 
@@ -30,18 +26,12 @@ function loadDefaultFont(){
 }
 
 function draw() {
-    drawingContext.setLineDash([]);
     clear();
     if (!font) return;
     background(255);
-
-    push();
-    translate(offsetX, offsetY);
-    
     noFill();
     stroke(0);
     strokeWeight(outline);
-
     for (let cmd of fontPath.commands) {
         if (cmd.type === 'M') {
             beginShape();
@@ -63,8 +53,6 @@ function draw() {
             endShape(CLOSE);
         }
     }
-
-    pop();
 }
 
 function distort(x, y) {
@@ -93,15 +81,16 @@ function updateCanvasSize() {
     if (fontPath) {
         const bbox = fontPath.getBoundingBox();
         const padding = fSize / 2;
-        const extraPadding = Math.max(outline, noiseStrength) * 2;
+        
+        const extraPadding = Math.max(outline, noiseStrength) * 2; 
 
+        
         const newWidth = bbox.x2 - bbox.x1 + padding * 2 + extraPadding;
         const newHeight = bbox.y2 - bbox.y1 + padding * 2 + extraPadding;
-
+        
         resizeCanvas(newWidth, newHeight);
-
-        offsetX = -bbox.x1 + padding;
-        offsetY = -bbox.y1 + padding;
+        
+        translate(-bbox.x1 + padding, -bbox.y1 + padding);
     }
 }
 
@@ -354,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateOutput('nSt', document.getElementById('nSt').value);
 
 });
+
 
 
 
