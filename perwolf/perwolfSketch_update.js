@@ -82,17 +82,13 @@ function updateCanvasSize() {
         const bbox = fontPath.getBoundingBox();
         const padding = fSize / 2;
 
-        // Add extra padding for stroke and noise
         const extraPadding = Math.max(outline, noiseStrength) * 2; 
         
-        // Calculate new dimensions with padding
         const newWidth = bbox.x2 - bbox.x1 + padding * 2 + extraPadding;
         const newHeight = bbox.y2 - bbox.y1 + padding * 2 + extraPadding;
 
-        // Resize canvas
         resizeCanvas(newWidth, newHeight);
         
-        // Adjust position to keep text within bounds
         translate(-bbox.x1 + padding, -bbox.y1 + padding);
     }
 }
@@ -136,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const output = document.getElementById("output");
 
     form.addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent the form from submitting normally
+        event.preventDefault();
 
         msg = txInput.value;
         fSize = fSInput.value;
@@ -173,8 +169,7 @@ document.addEventListener("DOMContentLoaded", function() {
             reader.readAsDataURL(file);
         }
     });
-
-    // Add event listeners to automatically submit the form when an input changes
+    
     const inputs = [txInput, fSInput, sTInput, nScInput, nStInput];
     inputs.forEach(input => {
         input.addEventListener("input", function() {
@@ -185,22 +180,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const slider = document.getElementById('nSt');
-    const output = document.getElementById('nStOutput'); // Adjust if you have a different output element
+    const output = document.getElementById('nStOutput');
 
-    // Check if slider and output elements are found
     if (!slider || !output) {
         console.error('Slider or output element not found');
         return;
     }
 
-    // Set initial value of slider and output
     slider.value = 50;
     output.value = slider.value;
 
-    // Waiting time before animation
     setTimeout(() => {
         console.log("Starting slider animation...");
-        animateSlider(50, 150, 5000); // Duration of 10 seconds
+        animateSlider(50, 150, 5000);
     }, 2000);
 
     function animateSlider(startValue, endValue, duration) {
@@ -211,18 +203,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const progress = Math.min(elapsedTime / duration, 1);
             const newValue = Math.round(startValue + (endValue - startValue) * progress);
             
-            // Update slider and output values
             slider.value = newValue;
             output.value = newValue;
 
-            // Update the canvas with the new noiseStrength value
             noiseStrength = newValue;
             updateText();
 
             if (progress < 1) {
                 requestAnimationFrame(updateSlider);
             } else {
-                // Ensure the final value is set correctly
                 slider.value = endValue;
                 output.value = endValue;
                 noiseStrength = endValue;
@@ -248,7 +237,6 @@ document.addEventListener("DOMContentLoaded", function() {
         popup.style.display = 'none';
     });
 
-    // Close the popup when clicking outside of it
     window.addEventListener('click', function(event) {
         if (event.target === popup) {
             popup.style.display = 'none';
@@ -260,26 +248,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputField = document.getElementById('tx');
     const initialText = 'Welcome :)';
 
-    // Set initial text
     inputField.value = initialText;
 
-    // Handle focus event
     inputField.addEventListener('focus', function() {
         if (inputField.value === initialText) {
             inputField.value = '';
         }
     });
 
-    // Handle blur event
     inputField.addEventListener('blur', function() {
         if (inputField.value === '') {
             inputField.value = initialText;
         }
     });
 
-    // Other initializations and event listeners
     const form = document.getElementById("myForm");
-
     const fUInput = document.getElementById("fU");
     const txInput = document.getElementById("tx");
     const fSInput = document.getElementById("fS");
@@ -289,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sBButton = document.getElementById("sB");
 
     form.addEventListener("submit", function(event) {
-        event.preventDefault(); // Prevent the form from submitting normally
+        event.preventDefault();
 
         msg = txInput.value;
         fSize = fSInput.value;
@@ -322,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Add event listeners to automatically submit the form when an input changes
     const inputs = [txInput, fSInput, sTInput, nScInput, nStInput];
     inputs.forEach(input => {
         input.addEventListener("input", function() {
@@ -330,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Popup initialization
     const openPopupBtn = document.getElementById('openPopupBtn');
     const popup = document.getElementById('popup');
     const closePopupBtn = document.getElementById('closePopupBtn');
@@ -343,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
         popup.style.display = 'none';
     });
 
-    // Close the popup when clicking outside of it
     window.addEventListener('click', function(event) {
         if (event.target === popup) {
             popup.style.display = 'none';
@@ -355,10 +335,10 @@ function updateOutput(id, value) {
     document.getElementById(id + 'Output').value = value;
 }
 
-// Add this script to ensure the initial values are set correctly
 document.addEventListener('DOMContentLoaded', () => {
     updateOutput('fS', document.getElementById('fS').value);
     updateOutput('sT', document.getElementById('sT').value);
     updateOutput('nSc', document.getElementById('nSc').value);
     updateOutput('nSt', document.getElementById('nSt').value);
+
 });
