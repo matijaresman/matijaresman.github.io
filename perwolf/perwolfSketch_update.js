@@ -1,7 +1,7 @@
 let font;
 let fSize = 200;
 let outline = 1;
-let msg = 'Welcome :)';
+let msg = 'Welcome! :)';
 let fontPath;
 let noiseScale = 1;
 let noiseStrength = 50;
@@ -12,6 +12,7 @@ let offsetY = 0;
 function setup() {
     let cnv = createCanvas(800, 200, SVG);
     cnv.parent('canvas-container');
+    noLoop();
     loadDefaultFont();
 }
 
@@ -352,4 +353,5 @@ document.addEventListener('DOMContentLoaded', () => {
     updateOutput('nSt', document.getElementById('nSt').value);
 
 });
+
 
