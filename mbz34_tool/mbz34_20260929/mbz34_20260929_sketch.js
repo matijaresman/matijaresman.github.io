@@ -20,7 +20,7 @@ const PALETTE = [
 
 // Font files (NOT baked):
 const FONT_FILES = [
-  "/assets/HARBER_Expanded.ttf"
+  "assets/HARBER_Expanded.ttf"
 ];
 
 let HB = null;
