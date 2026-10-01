@@ -448,7 +448,7 @@ function buildGlobalControls() {
   const svgWrap = createDiv("").parent(row);
   svgWrap.addClass("field");
   createButton("Save as SVG").parent(svgWrap).addClass("full-btn").mousePressed(exportSVG);
-  createButton("Export PNG sequence (keeps transparency)").parent(panelEl).addClass("full-btn").mousePressed(exportPNGSequence);
+  createButton("Export PNG sequence").parent(panelEl).addClass("full-btn").mousePressed(exportPNGSequence);
   createButton("Record video (WebM, with audio)").parent(panelEl).addClass("full-btn").mousePressed(recordVideo);
 }
 
