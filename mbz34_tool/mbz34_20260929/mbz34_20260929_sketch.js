@@ -20,7 +20,7 @@ const PALETTE = [
 
 // Font files (NOT baked):
 const FONT_FILES = [
-  "assets/HARBER_Expanded.ttf"
+  "assets/HARBER.ttf"
 ];
 
 let HB = null;
@@ -47,6 +47,11 @@ let playStartMillis = 0;
 let currentT = 0;
 let fps = 30;
 let wasPlayingBeforeRecord = true;
+
+// PNG sequence export:
+const SIM_RATE = 60; // sound smoothing runs at the live draw rate so exports animate like the preview
+let exportingFrames = false;
+let cancelFrameExport = false;
 
 let statusEl, timeSlider, playButton, scrubValEl;
 
@@ -443,6 +448,7 @@ function buildGlobalControls() {
   const svgWrap = createDiv("").parent(row);
   svgWrap.addClass("field");
   createButton("Save as SVG").parent(svgWrap).addClass("full-btn").mousePressed(exportSVG);
+  createButton("Export PNG sequence (keeps transparency)").parent(panelEl).addClass("full-btn").mousePressed(exportPNGSequence);
   createButton("Record video (WebM, with audio)").parent(panelEl).addClass("full-btn").mousePressed(recordVideo);
 }
 
@@ -705,7 +711,7 @@ function buildSoundCirclesSectionForBox(box, parent) {
 
   row = fieldRow(fieldsWrap);
   sliderField(row, "Size variation loud", 0, 1, box.sizeVariationMax, 0.05, (v) => (box.sizeVariationMax = v), (v) => Number(v).toFixed(2));
-  sliderField(row, "Contrast", 0.5, 5, box.contrast, 0.1, (v) => (box.contrast = v), (v) => Number(v).toFixed(1));
+  sliderField(row, "Contrast", 0, 5, box.contrast, 0.1, (v) => (box.contrast = v), (v) => Number(v).toFixed(1));
 
   row = fieldRow(fieldsWrap);
   sliderField(row, "Scatter quiet", 0, 10, box.scatterMin, 0.1, (v) => (box.scatterMin = v), (v) => Number(v).toFixed(1));
@@ -1036,30 +1042,7 @@ function ensureAudioGraph() {
 function updateSound() {
   if (playing && audioLoaded && analyser) {
     analyser.getByteFrequencyData(spectrum);
-
-    let sum = 0;
-    for (let i = 0; i < BAND_RANGE; i++) sum += spectrum[i];
-    loudness = sum / BAND_RANGE / 255;
-
-    if (loudness < quietLevel) quietLevel = loudness;
-    else quietLevel += (loudness - quietLevel) * ADAPT_SPEED;
-    if (loudness > loudLevel) loudLevel = loudness;
-    else loudLevel += (loudness - loudLevel) * ADAPT_SPEED;
-
-    const range = Math.max(loudLevel - quietLevel, 0.05);
-    const level = Math.min(1, Math.max(0, (loudness - quietLevel) / range));
-
-    for (const box of boxes) {
-      const target = Math.pow(level, box.contrast);
-
-      box.chaos += (target - box.chaos) * (target > box.chaos ? 0.4 : 0.1) * box.speed;
-
-      const bands = getBoxBands(box);
-      for (let i = 0; i < BAND_RANGE; i++) bands[i] += (spectrum[i] / 255 - bands[i]) * box.speed;
-      box.bandLoudness += (loudness - box.bandLoudness) * box.speed;
-
-      box.flickerPhase += box.speed;
-    }
+    stepSound();
   } else if (!audioLoaded) {
     for (const box of boxes) box.chaos = 0;
   }
@@ -1070,6 +1053,33 @@ function updateSound() {
       `Sound level: ${loudness.toFixed(2)} (quietest ${Math.min(quietLevel, loudLevel).toFixed(2)}, ` +
         `loudest ${loudLevel.toFixed(2)}) -- chaos (${box ? box.label : ""}): ${box ? box.chaos.toFixed(2) : "0.00"}`
     );
+  }
+}
+
+// One step of the sound smoothing, from whatever is currently in `spectrum`:
+function stepSound() {
+  let sum = 0;
+  for (let i = 0; i < BAND_RANGE; i++) sum += spectrum[i];
+  loudness = sum / BAND_RANGE / 255;
+
+  if (loudness < quietLevel) quietLevel = loudness;
+  else quietLevel += (loudness - quietLevel) * ADAPT_SPEED;
+  if (loudness > loudLevel) loudLevel = loudness;
+  else loudLevel += (loudness - loudLevel) * ADAPT_SPEED;
+
+  const range = Math.max(loudLevel - quietLevel, 0.05);
+  const level = Math.min(1, Math.max(0, (loudness - quietLevel) / range));
+
+  for (const box of boxes) {
+    const target = Math.pow(level, box.contrast);
+
+    box.chaos += (target - box.chaos) * (target > box.chaos ? 0.4 : 0.1) * box.speed;
+
+    const bands = getBoxBands(box);
+    for (let i = 0; i < BAND_RANGE; i++) bands[i] += (spectrum[i] / 255 - bands[i]) * box.speed;
+    box.bandLoudness += (loudness - box.bandLoudness) * box.speed;
+
+    box.flickerPhase += box.speed;
   }
 }
 
@@ -1226,11 +1236,15 @@ function updatePlaybackClock() {
 // DRAW FUNCTION:
 
 function draw() {
-  if (transparentBg) clear();
-  else background(bgColor);
   updatePlaybackClock();
   updateSound();
   drawGuides();
+  renderFrame();
+}
+
+function renderFrame() {
+  if (transparentBg) clear();
+  else background(bgColor);
 
   if (!hbFace) return;
 
@@ -1613,4 +1627,214 @@ function recordVideo() {
   recorder.start();
   statusEl.html(`Recording ${durationS.toFixed(1)}s at ${fps}fps${transparentBg ? " (transparent)" : ""} ...`);
   setTimeout(() => recorder.stop(), durationS * 1000 + 200);
+}
+
+// PNG sequence export:
+// Renders frame by frame (not in real time), so no frames are dropped. The sound reaction is
+// computed from the audio file offline, at the same rate as the live preview.
+
+async function exportPNGSequence() {
+  if (exportingFrames) {
+    cancelFrameExport = true;
+    return;
+  }
+  if (!hbFace) return;
+
+  // Chrome/Edge: write the frames straight into a folder. Other browsers: download one ZIP.
+  let outDir = null;
+  if (window.showDirectoryPicker) {
+    try {
+      const parent = await window.showDirectoryPicker({ mode: "readwrite" });
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
+      outDir = await parent.getDirectoryHandle(`mbz34-frames-${stamp}`, { create: true });
+    } catch (e) {
+      return; // picker cancelled
+    }
+  }
+
+  exportingFrames = true;
+  cancelFrameExport = false;
+  const wasPlaying = playing;
+  const savedT = currentT;
+  playing = false;
+  if (audioLoaded) audioEl.elt.pause();
+  playButton.html("Play");
+  noLoop();
+
+  try {
+    const durationS = audioLoaded ? audioDuration : FALLBACK_DURATION;
+    const frameCount = Math.max(1, Math.round(durationS * fps));
+
+    let spectra = null;
+    if (audioLoaded && audioBuffer) {
+      statusEl.html("Analysing audio ...");
+      spectra = await analyseSpectraOffline(SIM_RATE);
+    }
+
+    // Start the sound smoothing from rest, like a fresh playback:
+    loudness = 0;
+    quietLevel = 1;
+    loudLevel = 0;
+    for (const box of boxes) {
+      box.chaos = 0;
+      box.bandLoudness = 0;
+      box.flickerPhase = 0;
+      getBoxBands(box).fill(0);
+    }
+
+    const zipEntries = outDir ? null : [];
+    let simStep = 0;
+
+    for (let f = 0; f < frameCount; f++) {
+      if (cancelFrameExport) {
+        statusEl.html(`PNG export cancelled after ${f} frames.`);
+        return;
+      }
+
+      currentT = f / fps;
+      if (spectra) {
+        while (simStep <= currentT * SIM_RATE && simStep < spectra.length) {
+          spectrum.set(spectra[simStep]);
+          stepSound();
+          simStep++;
+        }
+      } else {
+        for (const box of boxes) box.chaos = 0;
+      }
+
+      renderFrame();
+      const blob = await new Promise((resolve) => p5Canvas.elt.toBlob(resolve, "image/png"));
+      const name = `mbz34_${String(f).padStart(5, "0")}.png`;
+
+      if (outDir) {
+        const fh = await outDir.getFileHandle(name, { create: true });
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+      } else {
+        zipEntries.push({ name, data: new Uint8Array(await blob.arrayBuffer()) });
+      }
+
+      if (f % 5 === 0 || f === frameCount - 1) {
+        statusEl.html(`Exporting PNG frame ${f + 1} / ${frameCount} (click the button again to cancel) ...`);
+      }
+    }
+
+    if (zipEntries) {
+      statusEl.html("Packing ZIP ...");
+      const url = URL.createObjectURL(makeZip(zipEntries));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "mbz34-frames.zip";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+    statusEl.html(
+      `Exported ${frameCount} PNG frames at ${fps} fps${outDir ? ` to folder ${outDir.name}` : ""}.`
+    );
+  } catch (err) {
+    statusEl.html(`PNG export failed: ${err.message}`);
+  } finally {
+    exportingFrames = false;
+    currentT = savedT;
+    if (audioLoaded) audioEl.elt.currentTime = savedT;
+    timeSlider.value(currentT);
+    if (wasPlaying) togglePlay();
+    loop();
+  }
+}
+
+// Spectrum snapshots of the whole track, `rate` per second, using the same analyser
+// settings as the live preview.
+async function analyseSpectraOffline(rate) {
+  const off = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
+  const src = off.createBufferSource();
+  src.buffer = audioBuffer;
+  const an = off.createAnalyser();
+  an.fftSize = 2048;
+  an.smoothingTimeConstant = 0.8;
+  src.connect(an);
+  an.connect(off.destination);
+
+  const quantum = 128 / audioBuffer.sampleRate;
+  const count = Math.floor((audioBuffer.duration - quantum) * rate);
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const t = Math.max(quantum, i / rate);
+    off
+      .suspend(t)
+      .then(() => {
+        const s = new Uint8Array(an.frequencyBinCount);
+        an.getByteFrequencyData(s);
+        out[i] = s;
+        off.resume();
+      })
+      .catch(() => {});
+  }
+  src.start(0);
+  await off.startRendering();
+
+  // Fill any gaps (e.g. two suspends landing in the same audio block):
+  for (let i = 0; i < count; i++) if (!out[i]) out[i] = out[i - 1] || new Uint8Array(an.frequencyBinCount);
+  return out;
+}
+
+// Minimal uncompressed ZIP writer (PNGs are already compressed):
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(data) {
+  let c = 0xffffffff;
+  for (let i = 0; i < data.length; i++) c = CRC_TABLE[(c ^ data[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function makeZip(entries) {
+  const parts = [];
+  const central = [];
+  let offset = 0;
+  const enc = new TextEncoder();
+
+  for (const e of entries) {
+    const name = enc.encode(e.name);
+    const crc = crc32(e.data);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true);
+    local.setUint16(4, 20, true);
+    local.setUint32(14, crc, true);
+    local.setUint32(18, e.data.length, true);
+    local.setUint32(22, e.data.length, true);
+    local.setUint16(26, name.length, true);
+    parts.push(local, name, e.data);
+
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint32(16, crc, true);
+    cd.setUint32(20, e.data.length, true);
+    cd.setUint32(24, e.data.length, true);
+    cd.setUint16(28, name.length, true);
+    cd.setUint32(42, offset, true);
+    central.push(cd, name);
+
+    offset += 30 + name.length + e.data.length;
+  }
+
+  const cdSize = central.reduce((n, p) => n + p.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true);
+  end.setUint16(8, entries.length, true);
+  end.setUint16(10, entries.length, true);
+  end.setUint32(12, cdSize, true);
+  end.setUint32(16, offset, true);
+
+  return new Blob([...parts, ...central, end], { type: "application/zip" });
 }
