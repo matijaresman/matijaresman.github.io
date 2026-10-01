@@ -126,7 +126,7 @@ function createBox(overrides) {
       sizeVariationMax: 0.7,
       scatterMin: 0,
       scatterMax: 30,
-      contrast: 2,
+      contrast: 0.0,
       flicker: 0.3,
       speed: 0.25,
       flickerPhase: 0,
