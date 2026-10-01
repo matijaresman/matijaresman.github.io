@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MBZ 34 Tool Test -- 29-09-2026</title>
+  <title>MBZ 34 Tool Test</title>
 
   <style>
     * {
@@ -50,12 +50,10 @@
       box-shadow: 0 0 0 1px #222;
     }
 
-    /* Checkerboard preview when the background is transparent */
     #canvas-holder canvas.transparent-bg {
       background: repeating-conic-gradient(#444 0% 25%, #2a2a2a 0% 50%) 0 0 / 40px 40px;
     }
 
-    /* Margins / guide lines: drawn on their own canvas on top, so they never end up in an export */
     #canvas-holder canvas.guides-overlay {
       position: absolute;
       max-width: none;
@@ -107,6 +105,26 @@
 
     #panel .field-label .val {
       color: #ddd;
+    }
+
+    #panel .field-label {
+      align-items: center;
+    }
+
+    #panel .field-label input.val-input {
+      width: 72px;
+      flex: 0 0 72px;
+      padding: 1px 4px;
+      font-size: 11px;
+      text-align: right;
+      color: #ddd;
+      background: #1a1a1a;
+      border: 1px solid #333;
+    }
+
+    #panel .field-label input.val-input:focus {
+      outline: none;
+      border-color: #5a7fb0;
     }
 
     #panel .field-row {

@@ -53,7 +53,7 @@ const SIM_RATE = 60; // sound smoothing runs at the live draw rate so exports an
 let exportingFrames = false;
 let cancelFrameExport = false;
 
-let statusEl, timeSlider, playButton, scrubValEl;
+let statusEl, timeSlider, playButton, scrubLabel;
 
 let overlapMaskCanvas, overlapMaskCtx;
 
@@ -257,15 +257,72 @@ function fieldLabel(container, name, valueText) {
   return v;
 }
 
-function sliderField(parent, name, min, max, val, step, onChange, fmt) {
+// Field label with a typeable number box instead of a plain value.
+// The box commits on Enter or when it loses focus; typed values are clamped to [min, max].
+function valueInputLabel(container, name, val, min, max, step, onCommit) {
+  const row = createDiv("").parent(container);
+  row.addClass("field-label");
+  createSpan(name).parent(row);
+
+  const input = createElement("input").parent(row);
+  input.addClass("val-input");
+  input.attribute("type", "number");
+  input.attribute("min", min);
+  input.attribute("max", max);
+  input.attribute("step", step);
+
+  // Show at least the slider's precision, more if a finer value was typed:
+  const decimals = Math.min(4, String(step).includes(".") ? String(step).split(".")[1].length : 0);
+  const format = (v) => {
+    const fixed = Number(v).toFixed(decimals);
+    return Number(fixed) === Number(v) ? fixed : String(Math.round(v * 10000) / 10000);
+  };
+  let current = val;
+  const show = (v) => {
+    current = v;
+    input.elt.value = format(v);
+  };
+  show(val);
+
+  input.elt.addEventListener("change", () => {
+    let v = parseFloat(input.elt.value);
+    if (!isFinite(v)) {
+      show(current);
+      return;
+    }
+    v = Math.min(max, Math.max(min, v));
+    show(v);
+    onCommit(v);
+  });
+  input.elt.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") input.elt.blur();
+    if (e.key === "Escape") {
+      show(current);
+      input.elt.blur();
+    }
+  });
+
+  return {
+    // Update from elsewhere (slider, playback); leaves the box alone while someone is typing in it.
+    sync(v) {
+      if (document.activeElement !== input.elt) show(v);
+    },
+  };
+}
+
+function sliderField(parent, name, min, max, val, step, onChange) {
   const wrap = createDiv("").parent(parent);
   wrap.addClass("field");
-  const valSpan = fieldLabel(wrap, name, fmt ? fmt(val) : String(val));
-  const s = createSlider(min, max, val, step).parent(wrap);
+  let s;
+  const label = valueInputLabel(wrap, name, val, min, max, step, (v) => {
+    s.value(v);
+    onChange(v);
+  });
+  s = createSlider(min, max, val, step).parent(wrap);
   s.input(() => {
     const v = s.value();
     onChange(v);
-    if (valSpan) valSpan.html(fmt ? fmt(v) : String(v));
+    label.sync(v);
   });
   return s;
 }
@@ -273,7 +330,15 @@ function sliderField(parent, name, min, max, val, step, onChange, fmt) {
 function colorField(parent, name, initial, onChange) {
   const wrap = createDiv("").parent(parent);
   wrap.addClass("field");
-  const valSpan = fieldLabel(wrap, name, String(initial).toUpperCase());
+  const labelRow = createDiv("").parent(wrap);
+  labelRow.addClass("field-label");
+  createSpan(name).parent(labelRow);
+  const hexInput = createElement("input").parent(labelRow);
+  hexInput.addClass("val-input");
+  hexInput.attribute("type", "text");
+  hexInput.attribute("maxlength", 7);
+  hexInput.attribute("spellcheck", "false");
+  hexInput.elt.value = String(initial).toUpperCase();
 
   // Free color picker; the palette colors show up as quick picks in its dropdown.
   const input = createElement("input").parent(wrap);
@@ -283,7 +348,24 @@ function colorField(parent, name, initial, onChange) {
   input.elt.addEventListener("input", () => {
     const v = input.elt.value.toUpperCase();
     onChange(v);
-    valSpan.html(v);
+    hexInput.elt.value = v;
+  });
+
+  // Typed hex: accepts #RRGGBB, RRGGBB, #RGB or RGB.
+  hexInput.elt.addEventListener("change", () => {
+    let h = hexInput.elt.value.trim().replace(/^#/, "");
+    if (/^[0-9a-f]{3}$/i.test(h)) h = h.split("").map((c) => c + c).join("");
+    if (!/^[0-9a-f]{6}$/i.test(h)) {
+      hexInput.elt.value = input.elt.value.toUpperCase();
+      return;
+    }
+    const v = "#" + h.toUpperCase();
+    hexInput.elt.value = v;
+    input.elt.value = v.toLowerCase();
+    onChange(v);
+  });
+  hexInput.elt.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") hexInput.elt.blur();
   });
 
   return input;
@@ -360,7 +442,7 @@ function buildGlobalControls() {
     transparentBg = transparentCb.checked();
     p5Canvas.elt.classList.toggle("transparent-bg", transparentBg);
   });
-  sliderField(panelEl, "Zoom (centered)", 1, 5, zoom, 0.01, (v) => (zoom = v), (v) => Number(v).toFixed(2) + "x");
+  sliderField(panelEl, "Zoom (centered, x)", 1, 5, zoom, 0.01, (v) => (zoom = v));
 
   // Audio:
   section("Audio");
@@ -421,20 +503,28 @@ function buildGlobalControls() {
       if (audioLoaded) audioEl.elt.currentTime = 0;
       playStartMillis = millis();
       timeSlider.value(0);
-      if (scrubValEl) scrubValEl.html("0.00s");
+      if (scrubLabel) scrubLabel.sync(0);
     });
 
   const scrubWrap = createDiv("").parent(panelEl);
   scrubWrap.addClass("field");
-  scrubValEl = fieldLabel(scrubWrap, "Timeline", "0.00s");
-  timeSlider = createSlider(0, FALLBACK_DURATION, 0, 0.01).parent(scrubWrap);
-  timeSlider.input(() => {
+  const seek = (t) => {
     playing = false;
     playButton.html("Play");
     if (audioLoaded) audioEl.elt.pause();
-    currentT = timeSlider.value();
+    currentT = t;
     if (audioLoaded) audioEl.elt.currentTime = currentT;
-    scrubValEl.html(currentT.toFixed(2) + "s");
+  };
+  scrubLabel = valueInputLabel(scrubWrap, "Timeline (s)", 0, 0, 1e6, 0.01, (v) => {
+    const t = Math.min(v, audioLoaded ? audioDuration : FALLBACK_DURATION);
+    seek(t);
+    timeSlider.value(t);
+    scrubLabel.sync(t);
+  });
+  timeSlider = createSlider(0, FALLBACK_DURATION, 0, 0.01).parent(scrubWrap);
+  timeSlider.input(() => {
+    seek(timeSlider.value());
+    scrubLabel.sync(currentT);
   });
 
   sliderField(panelEl, "Export FPS", 12, 60, fps, 1, (v) => (fps = Math.round(v)));
@@ -659,12 +749,16 @@ function buildAnimationSectionForBox(box, parent) {
 
     const sliderWrap = createDiv("").parent(rowEl);
     sliderWrap.addClass("field");
-    const valSpan = fieldLabel(sliderWrap, `${axisName}`, Number(box.axisValues[axis.tag]).toFixed(2));
-    const s = createSlider(axis.min, axis.max, box.axisValues[axis.tag], step).parent(sliderWrap);
+    let s;
+    const label = valueInputLabel(sliderWrap, axisName, box.axisValues[axis.tag], axis.min, axis.max, step, (v) => {
+      box.axisValues[axis.tag] = v;
+      s.value(v);
+    });
+    s = createSlider(axis.min, axis.max, box.axisValues[axis.tag], step).parent(sliderWrap);
     s.input(() => {
       const v = s.value();
       box.axisValues[axis.tag] = v;
-      if (valSpan) valSpan.html(Number(v).toFixed(2));
+      label.sync(v);
     });
 
     if (axis.tag === "wght") return;
@@ -705,21 +799,21 @@ function buildSoundCirclesSectionForBox(box, parent) {
   const wght = fvarAxes.find((a) => a.tag === "wght");
   if (wght) {
     const step = (wght.max - wght.min) / 200 || 0.1;
-    sliderField(row, "wght loud", wght.min, wght.max, box.circleMax, step, (v) => (box.circleMax = v), (v) => Number(v).toFixed(2));
+    sliderField(row, "wght loud", wght.min, wght.max, box.circleMax, step, (v) => (box.circleMax = v));
   }
   sliderField(row, "Points loud", 1, 10, box.pointsMax, 1, (v) => (box.pointsMax = Math.round(v)));
 
   row = fieldRow(fieldsWrap);
-  sliderField(row, "Size variation loud", 0, 1, box.sizeVariationMax, 0.05, (v) => (box.sizeVariationMax = v), (v) => Number(v).toFixed(2));
-  sliderField(row, "Contrast", 0, 5, box.contrast, 0.1, (v) => (box.contrast = v), (v) => Number(v).toFixed(1));
+  sliderField(row, "Size variation loud", 0, 1, box.sizeVariationMax, 0.05, (v) => (box.sizeVariationMax = v));
+  sliderField(row, "Contrast", 0, 5, box.contrast, 0.1, (v) => (box.contrast = v));
 
   row = fieldRow(fieldsWrap);
-  sliderField(row, "Scatter quiet", 0, 10, box.scatterMin, 0.1, (v) => (box.scatterMin = v), (v) => Number(v).toFixed(1));
+  sliderField(row, "Scatter quiet", 0, 10, box.scatterMin, 0.1, (v) => (box.scatterMin = v));
   sliderField(row, "Scatter loud", 0, 100, box.scatterMax, 1, (v) => (box.scatterMax = v));
 
   row = fieldRow(fieldsWrap);
-  sliderField(row, "Static flicker", 0, 3, box.flicker, 0.05, (v) => (box.flicker = v), (v) => Number(v).toFixed(2));
-  sliderField(row, "Reactivity speed", 0.01, 1, box.speed, 0.01, (v) => (box.speed = v), (v) => Number(v).toFixed(2));
+  sliderField(row, "Static flicker", 0, 3, box.flicker, 0.05, (v) => (box.flicker = v));
+  sliderField(row, "Reactivity speed", 0.01, 1, box.speed, 0.01, (v) => (box.speed = v));
 }
 
 function buildRenderSectionForBox(box, parent) {
@@ -1230,7 +1324,7 @@ function updatePlaybackClock() {
   }
 
   timeSlider.value(currentT);
-  if (scrubValEl) scrubValEl.html(currentT.toFixed(2) + "s");
+  if (scrubLabel) scrubLabel.sync(currentT);
 }
 
 // DRAW FUNCTION:
