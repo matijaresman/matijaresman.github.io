@@ -637,7 +637,7 @@ function buildLayoutSectionForBox(box, parent) {
   row = fieldRow(parent);
   sliderField(row, "X", -1440, CANVAS_W, box.offsetX, 1, (v) => (box.offsetX = v));
   sliderField(row, "Y", -1080, CANVAS_H, box.offsetY, 1, (v) => (box.offsetY = v));
-  sliderField(parent, "Kerning", -100, 1000, box.kerning, 1, (v) => (box.kerning = v));
+  sliderField(parent, "Kerning", -500, 1000, box.kerning, 1, (v) => (box.kerning = v));
 }
 
 function buildAnimationSectionForBox(box, parent) {
