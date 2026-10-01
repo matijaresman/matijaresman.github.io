@@ -39,6 +39,7 @@ let hbFace = null;
 let fvarAxes = [];
 
 let bgColor = "#870000";
+let transparentBg = false;
 let zoom = 1;
 
 let playing = false;
@@ -346,6 +347,14 @@ function buildGlobalControls() {
   // Canvas-level settings:
   section("Canvas");
   colorField(panelEl, "Background", bgColor, (v) => (bgColor = v));
+  const transparentCb = createCheckbox("Transparent background", transparentBg).parent(panelEl);
+  transparentCb.style("color", "#ccc");
+  transparentCb.style("font-size", "12px");
+  transparentCb.style("margin-bottom", "10px");
+  transparentCb.changed(() => {
+    transparentBg = transparentCb.checked();
+    p5Canvas.elt.classList.toggle("transparent-bg", transparentBg);
+  });
   sliderField(panelEl, "Zoom (centered)", 1, 5, zoom, 0.01, (v) => (zoom = v), (v) => Number(v).toFixed(2) + "x");
 
   // Audio:
@@ -1217,7 +1226,8 @@ function updatePlaybackClock() {
 // DRAW FUNCTION:
 
 function draw() {
-  background(bgColor);
+  if (transparentBg) clear();
+  else background(bgColor);
   updatePlaybackClock();
   updateSound();
   drawGuides();
@@ -1535,7 +1545,7 @@ function exportSVG() {
   const cy = CANVAS_H / 2;
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}">\n` +
-    `  <rect width="100%" height="100%" fill="${bgColor}"/>\n` +
+    (transparentBg ? "" : `  <rect width="100%" height="100%" fill="${bgColor}"/>\n`) +
     `  <g transform="translate(${cx} ${cy}) scale(${zoom}) translate(${-cx} ${-cy})">\n` +
     `    ${shapes.join("\n    ")}\n` +
     `  </g>\n` +
@@ -1601,6 +1611,6 @@ function recordVideo() {
 
   const durationS = audioLoaded ? audioDuration : FALLBACK_DURATION;
   recorder.start();
-  statusEl.html(`Recording ${durationS.toFixed(1)}s at ${fps}fps ...`);
+  statusEl.html(`Recording ${durationS.toFixed(1)}s at ${fps}fps${transparentBg ? " (transparent)" : ""} ...`);
   setTimeout(() => recorder.stop(), durationS * 1000 + 200);
 }

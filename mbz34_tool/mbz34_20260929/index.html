@@ -50,6 +50,11 @@
       box-shadow: 0 0 0 1px #222;
     }
 
+    /* Checkerboard preview when the background is transparent */
+    #canvas-holder canvas.transparent-bg {
+      background: repeating-conic-gradient(#444 0% 25%, #2a2a2a 0% 50%) 0 0 / 40px 40px;
+    }
+
     /* Margins / guide lines: drawn on their own canvas on top, so they never end up in an export */
     #canvas-holder canvas.guides-overlay {
       position: absolute;
