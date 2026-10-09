@@ -38,6 +38,9 @@ let currentFontPath = FONT_FILES[0];
 let hbFace = null;
 let fvarAxes = [];
 
+// Axes left out of the UI and pinned to a fixed value:
+const FIXED_AXES = { OPTS: 0 };
+
 let bgColor = "#870000";
 let transparentBg = false;
 let zoom = 1;
@@ -93,6 +96,27 @@ let quietLevel = 1;
 let loudLevel = 0;
 let soundMeterEl;
 
+// Frequency bands (each one normalized against its own recent quietest/loudest, like the overall level):
+const FREQ_BANDS = [
+  { key: "low", name: "Lows", from: 20, to: 250 },
+  { key: "lowMid", name: "Lower mids", from: 250, to: 500 },
+  { key: "highMid", name: "Upper mids", from: 500, to: 4000 },
+  { key: "high", name: "Highs", from: 4000, to: 20000 },
+];
+const FFT_SIZE = 2048;
+let bandQuiet = [1, 1, 1, 1];
+let bandLoud = [0, 0, 0, 0];
+let bandLevels = [0, 0, 0, 0]; // 0..1 per band
+
+function resetSoundLevels() {
+  loudness = 0;
+  quietLevel = 1;
+  loudLevel = 0;
+  bandQuiet = [1, 1, 1, 1];
+  bandLoud = [0, 0, 0, 0];
+  bandLevels = [0, 0, 0, 0];
+}
+
 // TEXT boxes:
 
 function createBox(overrides) {
@@ -116,17 +140,22 @@ function createBox(overrides) {
       overlapColor: "#870000",
 
       axisValues: {},
+      axisLoudValues: {},
       axisReactive: {},
       minReactThreshold: 0,
       maxReactThreshold: 100,
 
       soundCirclesEnabled: true,
+      scatterMinReact: 0,
+      scatterMaxReact: 100,
+      scatterSource: "level", // "level" (overall loudness) or "bands" (frequency bands)
+      bandReactivity: { low: 100, lowMid: 100, highMid: 100, high: 100 },
       circleMax: 4,
       pointsMax: 4,
       sizeVariationMax: 0.7,
       scatterMin: 0,
       scatterMax: 30,
-      contrast: 0.0,
+      contrast: 1.0,
       flicker: 0.3,
       speed: 0.25,
       flickerPhase: 0,
@@ -147,9 +176,11 @@ function createBox(overrides) {
 
 function applyDefaultAxesToBox(box) {
   box.axisValues = {};
+  box.axisLoudValues = {};
   box.axisReactive = {};
   fvarAxes.forEach((axis) => {
     box.axisValues[axis.tag] = axis.default;
+    box.axisLoudValues[axis.tag] = axis.max;
   });
   const wght = fvarAxes.find((a) => a.tag === "wght");
   if (wght) box.circleMax = Math.min(wght.max, Math.max(wght.min, box.circleMax));
@@ -740,28 +771,29 @@ function buildAnimationSectionForBox(box, parent) {
     return;
   }
 
+  note.html("Tick React to animate an axis with the loudness: it moves from the quiet value (silence) to the loud value (loudest).");
+
   fvarAxes.forEach((axis) => {
+    if (axis.tag in FIXED_AXES) return;
     if (!(axis.tag in box.axisValues)) box.axisValues[axis.tag] = axis.default;
-    const axisName = axis.tag;
+    if (!box.axisLoudValues) box.axisLoudValues = {};
+    if (!(axis.tag in box.axisLoudValues)) box.axisLoudValues[axis.tag] = axis.max;
     const step = (axis.max - axis.min) / 200 || 0.1;
 
     const rowEl = createDiv("").addClass("axis-row").parent(parent);
 
-    const sliderWrap = createDiv("").parent(rowEl);
-    sliderWrap.addClass("field");
-    let s;
-    const label = valueInputLabel(sliderWrap, axisName, box.axisValues[axis.tag], axis.min, axis.max, step, (v) => {
-      box.axisValues[axis.tag] = v;
-      s.value(v);
-    });
-    s = createSlider(axis.min, axis.max, box.axisValues[axis.tag], step).parent(sliderWrap);
-    s.input(() => {
-      const v = s.value();
-      box.axisValues[axis.tag] = v;
-      label.sync(v);
-    });
+    // Value when not reacting / quiet end of the range when reacting:
+    const baseField = sliderField(rowEl, axis.tag, axis.min, axis.max, box.axisValues[axis.tag], step, (v) => (box.axisValues[axis.tag] = v));
+    const baseNameEl = baseField.elt.parentElement.querySelector(".field-label span");
 
-    if (axis.tag === "wght") return;
+    // Loud end of the range (only shown when reacting):
+    const loudField = sliderField(rowEl, `${axis.tag} loud`, axis.min, axis.max, box.axisLoudValues[axis.tag], step, (v) => (box.axisLoudValues[axis.tag] = v));
+
+    const showReactUI = () => {
+      const reactive = !!box.axisReactive[axis.tag];
+      baseNameEl.textContent = reactive ? `${axis.tag} quiet` : axis.tag;
+      loudField.elt.parentElement.style.display = reactive ? "" : "none";
+    };
 
     const reactWrap = createDiv("").parent(rowEl);
     const reactLabel = createElement("label", "").addClass("axis-checkbox-label").parent(reactWrap);
@@ -770,8 +802,10 @@ function buildAnimationSectionForBox(box, parent) {
     if (box.axisReactive[axis.tag]) reactCheckbox.attribute("checked", "checked");
     reactCheckbox.elt.addEventListener("change", () => {
       box.axisReactive[axis.tag] = reactCheckbox.elt.checked;
+      showReactUI();
     });
     createSpan("React").parent(reactLabel);
+    showReactUI();
   });
 
   const row = fieldRow(parent);
@@ -795,6 +829,30 @@ function buildSoundCirclesSectionForBox(box, parent) {
     fieldsWrap.style("opacity", box.soundCirclesEnabled ? "1" : "0.4");
   });
 
+  // What drives the scatter: overall loudness or a mix of frequency bands.
+  const sourceWrap = createDiv("").parent(fieldsWrap);
+  sourceWrap.addClass("field");
+  fieldLabel(sourceWrap, "Reacts to");
+  const sourceSelect = createSelect().parent(sourceWrap);
+  sourceSelect.option("Overall loudness", "level");
+  sourceSelect.option("Frequency bands", "bands");
+  sourceSelect.selected(box.scatterSource);
+
+  if (!box.bandReactivity) box.bandReactivity = { low: 100, lowMid: 100, highMid: 100, high: 100 };
+  const bandsWrap = createDiv("").parent(fieldsWrap);
+  for (let i = 0; i < FREQ_BANDS.length; i += 2) {
+    const bandRow = fieldRow(bandsWrap);
+    for (const b of FREQ_BANDS.slice(i, i + 2)) {
+      sliderField(bandRow, `${b.name} (%)`, 0, 100, box.bandReactivity[b.key], 1, (v) => (box.bandReactivity[b.key] = v));
+    }
+  }
+  const showSourceUI = () => (bandsWrap.elt.style.display = box.scatterSource === "bands" ? "" : "none");
+  sourceSelect.changed(() => {
+    box.scatterSource = sourceSelect.value();
+    showSourceUI();
+  });
+  showSourceUI();
+
   let row = fieldRow(fieldsWrap);
   const wght = fvarAxes.find((a) => a.tag === "wght");
   if (wght) {
@@ -814,6 +872,10 @@ function buildSoundCirclesSectionForBox(box, parent) {
   row = fieldRow(fieldsWrap);
   sliderField(row, "Static flicker", 0, 3, box.flicker, 0.05, (v) => (box.flicker = v));
   sliderField(row, "Reactivity speed", 0.01, 1, box.speed, 0.01, (v) => (box.speed = v));
+
+  row = fieldRow(fieldsWrap);
+  sliderField(row, "Min reactivity (%)", 0, 100, box.scatterMinReact, 1, (v) => (box.scatterMinReact = v));
+  sliderField(row, "Max reactivity (%)", 0, 100, box.scatterMaxReact, 1, (v) => (box.scatterMaxReact = v));
 }
 
 function buildRenderSectionForBox(box, parent) {
@@ -914,13 +976,15 @@ function shapeText(box, font, text) {
 // Sound reactivity:
 
 function currentAxisValue(box, axis, env01) {
+  if (axis.tag in FIXED_AXES) return Math.min(axis.max, Math.max(axis.min, FIXED_AXES[axis.tag]));
   const base = box.axisValues[axis.tag] !== undefined ? box.axisValues[axis.tag] : axis.default;
-  if (axis.tag === "wght" || !box.axisReactive[axis.tag]) return base;
+  if (!box.axisReactive[axis.tag]) return base;
+  const loud = box.axisLoudValues && box.axisLoudValues[axis.tag] !== undefined ? box.axisLoudValues[axis.tag] : axis.max;
   const minT = box.minReactThreshold / 100;
   const maxT = box.maxReactThreshold / 100;
   const span = Math.max(1e-6, maxT - minT);
   const factor = Math.min(1, Math.max(0, (env01 - minT) / span));
-  return base + (axis.max - base) * factor;
+  return base + (loud - base) * factor;
 }
 
 function setBoxVariations(box, font, env01, wghtOverride) {
@@ -1059,8 +1123,7 @@ function loadAudioFile(file) {
     })
     .then(([, decoded]) => {
       audioBuffer = decoded;
-      quietLevel = 1;
-      loudLevel = 0;
+      resetSoundLevels();
       audioDuration = audioEl.elt.duration;
       computeEnvelope();
       audioLoaded = true;
@@ -1127,7 +1190,7 @@ function ensureAudioGraph() {
   }
   if (!analyser) {
     analyser = ctx.createAnalyser();
-    analyser.fftSize = 2048; // 1024 bands
+    analyser.fftSize = FFT_SIZE; // 1024 bands
     analyser.smoothingTimeConstant = 0.8;
     audioSourceNode.connect(analyser);
   }
@@ -1145,7 +1208,8 @@ function updateSound() {
     const box = boxes[activeBoxIndex];
     soundMeterEl.html(
       `Sound level: ${loudness.toFixed(2)} (quietest ${Math.min(quietLevel, loudLevel).toFixed(2)}, ` +
-        `loudest ${loudLevel.toFixed(2)}) -- chaos (${box ? box.label : ""}): ${box ? box.chaos.toFixed(2) : "0.00"}`
+        `loudest ${loudLevel.toFixed(2)}) -- chaos (${box ? box.label : ""}): ${box ? box.chaos.toFixed(2) : "0.00"}<br>` +
+        FREQ_BANDS.map((b, i) => `${b.name}: ${bandLevels[i].toFixed(2)}`).join(" · ")
     );
   }
 }
@@ -1162,10 +1226,17 @@ function stepSound() {
   else loudLevel += (loudness - loudLevel) * ADAPT_SPEED;
 
   const range = Math.max(loudLevel - quietLevel, 0.05);
-  const level = Math.min(1, Math.max(0, (loudness - quietLevel) / range));
+  const overallLevel = Math.min(1, Math.max(0, (loudness - quietLevel) / range));
+
+  updateBandLevels();
 
   for (const box of boxes) {
-    const target = Math.pow(level, box.contrast);
+    const level = box.scatterSource === "bands" ? bandDrive(box) : overallLevel;
+    // Same Min/Max reactivity window as the variable axes, applied before contrast:
+    const minT = box.scatterMinReact / 100;
+    const maxT = box.scatterMaxReact / 100;
+    const windowed = Math.min(1, Math.max(0, (level - minT) / Math.max(1e-6, maxT - minT)));
+    const target = Math.pow(windowed, box.contrast);
 
     box.chaos += (target - box.chaos) * (target > box.chaos ? 0.4 : 0.1) * box.speed;
 
@@ -1175,6 +1246,38 @@ function stepSound() {
 
     box.flickerPhase += box.speed;
   }
+}
+
+// Average of the spectrum bins inside each band, then adapted to that band's recent quietest/loudest:
+function updateBandLevels() {
+  const sampleRate = audioBuffer ? audioBuffer.sampleRate : 44100;
+  const hzPerBin = sampleRate / FFT_SIZE;
+  FREQ_BANDS.forEach((b, k) => {
+    const first = Math.max(0, Math.floor(b.from / hzPerBin));
+    const last = Math.min(spectrum.length - 1, Math.ceil(b.to / hzPerBin) - 1);
+    let sum = 0;
+    for (let i = first; i <= last; i++) sum += spectrum[i];
+    const raw = last >= first ? sum / (last - first + 1) / 255 : 0;
+
+    if (raw < bandQuiet[k]) bandQuiet[k] = raw;
+    else bandQuiet[k] += (raw - bandQuiet[k]) * ADAPT_SPEED;
+    if (raw > bandLoud[k]) bandLoud[k] = raw;
+    else bandLoud[k] += (raw - bandLoud[k]) * ADAPT_SPEED;
+
+    const range = Math.max(bandLoud[k] - bandQuiet[k], 0.05);
+    bandLevels[k] = Math.min(1, Math.max(0, (raw - bandQuiet[k]) / range));
+  });
+}
+
+// Strongest band, each scaled by its reactivity: a band at 100% can drive the scatter fully,
+// at 50% it can drive it halfway, at 0% it's ignored.
+function bandDrive(box) {
+  let drive = 0;
+  FREQ_BANDS.forEach((b, k) => {
+    const weight = (box.bandReactivity[b.key] ?? 100) / 100;
+    drive = Math.max(drive, bandLevels[k] * weight);
+  });
+  return drive;
 }
 
 function getBoxBands(box) {
@@ -1766,9 +1869,7 @@ async function exportPNGSequence() {
     }
 
     // Start the sound smoothing from rest, like a fresh playback:
-    loudness = 0;
-    quietLevel = 1;
-    loudLevel = 0;
+    resetSoundLevels();
     for (const box of boxes) {
       box.chaos = 0;
       box.bandLoudness = 0;
@@ -1845,7 +1946,7 @@ async function analyseSpectraOffline(rate) {
   const src = off.createBufferSource();
   src.buffer = audioBuffer;
   const an = off.createAnalyser();
-  an.fftSize = 2048;
+  an.fftSize = FFT_SIZE;
   an.smoothingTimeConstant = 0.8;
   src.connect(an);
   an.connect(off.destination);
