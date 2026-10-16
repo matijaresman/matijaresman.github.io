@@ -1,5 +1,11 @@
-const CANVAS_W = 1080;
-const CANVAS_H = 1440;
+const CANVAS_SIZES = [
+  [1080, 1440],
+  [1440, 1080],
+  [1080, 1920],
+  [1920, 1080],
+];
+let canvasW = 1080;
+let canvasH = 1440;
 const WRAP_RIGHT_PADDING = 40;
 const FALLBACK_DURATION = 10;
 
@@ -59,6 +65,7 @@ let cancelFrameExport = false;
 let statusEl, timeSlider, playButton, scrubLabel;
 
 let overlapMaskCanvas, overlapMaskCtx;
+let guidesControlsEl;
 
 let boxes = [];
 let activeBoxIndex = 0;
@@ -237,7 +244,7 @@ function setup() {
   canvasHolderEl = select("#canvas-holder");
   panelEl = select("#panel");
 
-  p5Canvas = createCanvas(CANVAS_W, CANVAS_H);
+  p5Canvas = createCanvas(canvasW, canvasH);
   p5Canvas.parent(canvasHolderEl);
   p5Canvas.elt.style.width = "";
   p5Canvas.elt.style.height = "";
@@ -464,6 +471,16 @@ function buildGlobalControls() {
 
   // Canvas-level settings:
   section("Canvas");
+  const sizeWrap = createDiv("").parent(panelEl);
+  sizeWrap.addClass("field");
+  fieldLabel(sizeWrap, "Resolution");
+  const sizeSelect = createSelect().parent(sizeWrap);
+  for (const [w, h] of CANVAS_SIZES) sizeSelect.option(`${w} × ${h}`, `${w}x${h}`);
+  sizeSelect.selected(`${canvasW}x${canvasH}`);
+  sizeSelect.changed(() => {
+    const [w, h] = sizeSelect.value().split("x").map(Number);
+    if (!setCanvasSize(w, h)) sizeSelect.selected(`${canvasW}x${canvasH}`);
+  });
   colorField(panelEl, "Background", bgColor, (v) => (bgColor = v));
   const transparentCb = createCheckbox("Transparent background", transparentBg).parent(panelEl);
   transparentCb.style("color", "#ccc");
@@ -573,6 +590,36 @@ function buildGlobalControls() {
   createButton("Record video (WebM, with audio)").parent(panelEl).addClass("full-btn").mousePressed(recordVideo);
 }
 
+// Canvas size:
+
+// Text boxes keep their X/Y (measured from the top-left corner). Returns false if the size can't change right now.
+function setCanvasSize(w, h) {
+  if (w === canvasW && h === canvasH) return true;
+  if (exportingFrames) {
+    statusEl.html("Can't change the resolution during a PNG export.");
+    return false;
+  }
+  if (playing) togglePlay();
+
+  canvasW = w;
+  canvasH = h;
+  resizeCanvas(w, h);
+  p5Canvas.elt.style.width = "";
+  p5Canvas.elt.style.height = "";
+  overlapMaskCanvas = null; // recreated at the new size
+
+  // Keep margins and guide lines inside the new canvas:
+  margins.top = Math.min(margins.top, h / 2);
+  margins.bottom = Math.min(margins.bottom, h / 2);
+  margins.left = Math.min(margins.left, w / 2);
+  margins.right = Math.min(margins.right, w / 2);
+  for (const g of guides) g.position = Math.min(g.position, g.orientation === "horizontal" ? h : w);
+
+  buildGuidesControls();
+  renderBoxSettingsUI();
+  return true;
+}
+
 // Margins & guides (UI):
 
 function showCheckbox(parent, checked, onChange) {
@@ -585,27 +632,31 @@ function showCheckbox(parent, checked, onChange) {
 }
 
 function buildGuidesControls() {
-  section("Margins");
-  showCheckbox(panelEl, margins.show, (v) => (margins.show = v));
-  let row = fieldRow(panelEl);
-  sliderField(row, "Top", 0, CANVAS_H / 2, margins.top, 1, (v) => (margins.top = v));
-  sliderField(row, "Bottom", 0, CANVAS_H / 2, margins.bottom, 1, (v) => (margins.bottom = v));
-  row = fieldRow(panelEl);
-  sliderField(row, "Left", 0, CANVAS_W / 2, margins.left, 1, (v) => (margins.left = v));
-  sliderField(row, "Right", 0, CANVAS_W / 2, margins.right, 1, (v) => (margins.right = v));
-  colorField(panelEl, "Color", margins.color, (v) => (margins.color = v));
+  if (!guidesControlsEl) guidesControlsEl = createDiv("").parent(panelEl);
+  guidesControlsEl.html("");
+  const panel = guidesControlsEl;
 
-  section("Grid");
-  showCheckbox(panelEl, grid.show, (v) => (grid.show = v));
-  const gridRow = fieldRow(panelEl);
+  section("Margins", panel);
+  showCheckbox(panel, margins.show, (v) => (margins.show = v));
+  let row = fieldRow(panel);
+  sliderField(row, "Top", 0, canvasH / 2, margins.top, 1, (v) => (margins.top = v));
+  sliderField(row, "Bottom", 0, canvasH / 2, margins.bottom, 1, (v) => (margins.bottom = v));
+  row = fieldRow(panel);
+  sliderField(row, "Left", 0, canvasW / 2, margins.left, 1, (v) => (margins.left = v));
+  sliderField(row, "Right", 0, canvasW / 2, margins.right, 1, (v) => (margins.right = v));
+  colorField(panel, "Color", margins.color, (v) => (margins.color = v));
+
+  section("Grid", panel);
+  showCheckbox(panel, grid.show, (v) => (grid.show = v));
+  const gridRow = fieldRow(panel);
   sliderField(gridRow, "Rows", 1, 24, grid.rows, 1, (v) => (grid.rows = Math.round(v)));
   sliderField(gridRow, "Columns", 1, 24, grid.columns, 1, (v) => (grid.columns = Math.round(v)));
-  colorField(panelEl, "Grid color", grid.color, (v) => (grid.color = v));
+  colorField(panel, "Grid color", grid.color, (v) => (grid.color = v));
 
-  section("Custom guide lines");
-  guideTabBarEl = createDiv("").parent(panelEl);
+  section("Custom guide lines", panel);
+  guideTabBarEl = createDiv("").parent(panel);
   guideTabBarEl.id("guide-tab-bar");
-  guideSettingsEl = createDiv("").parent(panelEl);
+  guideSettingsEl = createDiv("").parent(panel);
   guideSettingsEl.id("guide-settings");
   buildGuideTabBar();
   renderGuideSettingsUI();
@@ -617,7 +668,7 @@ function addGuide() {
     label: `Guide ${nextGuideId}`,
     show: false,
     orientation: "horizontal",
-    position: Math.round(CANVAS_H / 2),
+    position: Math.round(canvasH / 2),
     color: GUIDE_COLOR,
   });
   nextGuideId++;
@@ -675,13 +726,13 @@ function renderGuideSettingsUI() {
   orientSelect.selected(g.orientation);
   orientSelect.changed(() => {
     g.orientation = orientSelect.value();
-    const max = g.orientation === "horizontal" ? CANVAS_H : CANVAS_W;
+    const max = g.orientation === "horizontal" ? canvasH : canvasW;
     g.position = Math.min(g.position, max);
     renderGuideSettingsUI();
   });
 
   const horizontal = g.orientation === "horizontal";
-  sliderField(guideSettingsEl, horizontal ? "Position (y)" : "Position (x)", 0, horizontal ? CANVAS_H : CANVAS_W, g.position, 1, (v) => (g.position = v));
+  sliderField(guideSettingsEl, horizontal ? "Position (y)" : "Position (x)", 0, horizontal ? canvasH : canvasW, g.position, 1, (v) => (g.position = v));
   colorField(guideSettingsEl, "Color", g.color, (v) => (g.color = v));
 }
 
@@ -756,8 +807,8 @@ function buildLayoutSectionForBox(box, parent) {
   sliderField(row, "Font size", 20, 1000, box.fontSize, 1, (v) => (box.fontSize = v));
   sliderField(row, "Line height", 40, 1000, box.lineHeight, 1, (v) => (box.lineHeight = v));
   row = fieldRow(parent);
-  sliderField(row, "X", -1440, CANVAS_W, box.offsetX, 1, (v) => (box.offsetX = v));
-  sliderField(row, "Y", -1080, CANVAS_H, box.offsetY, 1, (v) => (box.offsetY = v));
+  sliderField(row, "X", -1440, canvasW, box.offsetX, 1, (v) => (box.offsetX = v));
+  sliderField(row, "Y", -1080, canvasH, box.offsetY, 1, (v) => (box.offsetY = v));
   sliderField(parent, "Kerning", -500, 1000, box.kerning, 1, (v) => (box.kerning = v));
 }
 
@@ -1084,7 +1135,7 @@ function wrapParagraph(box, font, paragraph, maxWidth) {
 }
 
 function getWrappedLines(box, font) {
-  const maxWidth = Math.max(20, CANVAS_W - box.offsetX - WRAP_RIGHT_PADDING);
+  const maxWidth = Math.max(20, canvasW - box.offsetX - WRAP_RIGHT_PADDING);
   const paragraphs = box.uiText.split("\n");
   let result = [];
   for (const p of paragraphs) {
@@ -1447,9 +1498,9 @@ function renderFrame() {
 
   const ctx = drawingContext;
   ctx.save();
-  ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
+  ctx.translate(canvasW / 2, canvasH / 2);
   ctx.scale(zoom, zoom);
-  ctx.translate(-CANVAS_W / 2, -CANVAS_H / 2);
+  ctx.translate(-canvasW / 2, -canvasH / 2);
 
   for (const box of boxes) {
     renderBox(ctx, box, currentT);
@@ -1476,7 +1527,7 @@ function syncGuidesCanvas() {
     guidesCanvas.width = pw;
     guidesCanvas.height = ph;
   }
-  return { sx: pw / CANVAS_W, sy: ph / CANVAS_H, dpr };
+  return { sx: pw / canvasW, sy: ph / canvasH, dpr };
 }
 
 function drawGuides() {
@@ -1507,15 +1558,15 @@ function drawGuides() {
 
   if (margins.show) {
     hLine(margins.top, margins.color);
-    hLine(CANVAS_H - margins.bottom, margins.color);
+    hLine(canvasH - margins.bottom, margins.color);
     vLine(margins.left, margins.color);
-    vLine(CANVAS_W - margins.right, margins.color);
+    vLine(canvasW - margins.right, margins.color);
   }
   if (grid.show) {
     const x0 = margins.left;
-    const x1 = CANVAS_W - margins.right;
+    const x1 = canvasW - margins.right;
     const y0 = margins.top;
-    const y1 = CANVAS_H - margins.bottom;
+    const y1 = canvasH - margins.bottom;
     for (let i = 1; i < grid.rows; i++) hLine(y0 + ((y1 - y0) * i) / grid.rows, grid.color);
     for (let i = 1; i < grid.columns; i++) vLine(x0 + ((x1 - x0) * i) / grid.columns, grid.color);
   }
@@ -1542,8 +1593,8 @@ function opsToCanvasPath(ctx, ops) {
 function ensureOverlapMaskCanvas() {
   if (!overlapMaskCanvas) {
     overlapMaskCanvas = document.createElement("canvas");
-    overlapMaskCanvas.width = CANVAS_W;
-    overlapMaskCanvas.height = CANVAS_H;
+    overlapMaskCanvas.width = canvasW;
+    overlapMaskCanvas.height = canvasH;
     overlapMaskCtx = overlapMaskCanvas.getContext("2d");
   }
 }
@@ -1556,7 +1607,7 @@ function fillWithOverlapHighlight(ctx, box, ops) {
 
   ensureOverlapMaskCanvas();
   const mctx = overlapMaskCtx;
-  mctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  mctx.clearRect(0, 0, canvasW, canvasH);
 
   mctx.globalCompositeOperation = "source-over";
   mctx.fillStyle = "#fff";
@@ -1569,7 +1620,7 @@ function fillWithOverlapHighlight(ctx, box, ops) {
 
   mctx.globalCompositeOperation = "source-in";
   mctx.fillStyle = box.overlapColor;
-  mctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  mctx.fillRect(0, 0, canvasW, canvasH);
   mctx.globalCompositeOperation = "source-over";
 
   ctx.drawImage(overlapMaskCanvas, 0, 0);
@@ -1738,7 +1789,7 @@ function exportSVG() {
       shapes.push(`<path d="${d}" fill="${box.fillColor}" fill-rule="nonzero"/>`);
       shapes.push(
         `<mask id="${maskId}"><path d="${d}" fill="#fff" fill-rule="nonzero"/><path d="${d}" fill="#000" fill-rule="evenodd"/></mask>` +
-          `<rect x="0" y="0" width="${CANVAS_W}" height="${CANVAS_H}" fill="${box.overlapColor}" mask="url(#${maskId})"/>`
+          `<rect x="0" y="0" width="${canvasW}" height="${canvasH}" fill="${box.overlapColor}" mask="url(#${maskId})"/>`
       );
     } else {
       const doFill = box.renderMode === "fill-nonzero" || box.renderMode === "fill-outline";
@@ -1752,10 +1803,10 @@ function exportSVG() {
     }
   }
 
-  const cx = CANVAS_W / 2;
-  const cy = CANVAS_H / 2;
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
   const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS_W}" height="${CANVAS_H}">\n` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}">\n` +
     (transparentBg ? "" : `  <rect width="100%" height="100%" fill="${bgColor}"/>\n`) +
     `  <g transform="translate(${cx} ${cy}) scale(${zoom}) translate(${-cx} ${-cy})">\n` +
     `    ${shapes.join("\n    ")}\n` +
