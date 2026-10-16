@@ -60,6 +60,9 @@ let wasPlayingBeforeRecord = true;
 // PNG sequence export:
 const SIM_RATE = 60; // sound smoothing runs at the live draw rate so exports animate like the preview
 let exportingFrames = false;
+let exportStart = 0; // seconds
+let exportEnd = FALLBACK_DURATION;
+let exportRangeEl;
 let cancelFrameExport = false;
 
 let statusEl, timeSlider, playButton, scrubLabel;
@@ -574,6 +577,9 @@ function buildGlobalControls() {
     seek(timeSlider.value());
     scrubLabel.sync(currentT);
   });
+
+  exportRangeEl = createDiv("").parent(panelEl);
+  buildExportRangeControls();
 
   sliderField(panelEl, "Export FPS", 12, 60, fps, 1, (v) => (fps = Math.round(v)));
 
@@ -1438,6 +1444,18 @@ function lerpContour(a, b, f) {
 function updateTimelineRange() {
   const dur = audioLoaded ? audioDuration : FALLBACK_DURATION;
   timeSlider.elt.max = dur;
+  exportStart = 0;
+  exportEnd = dur;
+  buildExportRangeControls();
+}
+
+// Part of the timeline the PNG sequence export covers (rebuilt when the track length changes):
+function buildExportRangeControls() {
+  const dur = audioLoaded ? audioDuration : FALLBACK_DURATION;
+  exportRangeEl.html("");
+  const row = fieldRow(exportRangeEl);
+  sliderField(row, "Export from (s)", 0, dur, exportStart, 0.01, (v) => (exportStart = v));
+  sliderField(row, "Export to (s)", 0, dur, exportEnd, 0.01, (v) => (exportEnd = v));
 }
 
 function togglePlay() {
@@ -1912,7 +1930,10 @@ async function exportPNGSequence() {
 
   try {
     const durationS = audioLoaded ? audioDuration : FALLBACK_DURATION;
-    const frameCount = Math.max(1, Math.round(durationS * fps));
+    // Either slider may be the earlier one:
+    const startS = Math.min(exportStart, exportEnd, durationS);
+    const endS = Math.min(Math.max(exportStart, exportEnd), durationS);
+    const frameCount = Math.max(1, Math.round((endS - startS) * fps));
 
     let spectra = null;
     if (audioLoaded && audioBuffer) {
@@ -1938,7 +1959,8 @@ async function exportPNGSequence() {
         return;
       }
 
-      currentT = f / fps;
+      // The sound smoothing still runs from 0 s, so frames match a full playback:
+      currentT = startS + f / fps;
       if (spectra) {
         while (simStep <= currentT * SIM_RATE && simStep < spectra.length) {
           spectrum.set(spectra[simStep]);
@@ -1977,7 +1999,7 @@ async function exportPNGSequence() {
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
     statusEl.html(
-      `Exported ${frameCount} PNG frames at ${fps} fps${outDir ? ` to folder ${outDir.name}` : ""}.`
+      `Exported ${frameCount} PNG frames (${startS.toFixed(2)}s to ${endS.toFixed(2)}s) at ${fps} fps${outDir ? ` to folder ${outDir.name}` : ""}.`
     );
   } catch (err) {
     statusEl.html(`PNG export failed: ${err.message}`);
