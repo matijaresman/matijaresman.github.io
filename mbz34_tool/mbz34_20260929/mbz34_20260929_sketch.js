@@ -135,7 +135,7 @@ function createBox(overrides) {
       fontSize: 260,
       lineHeight: 300,
       offsetX: 80,
-      offsetY: 420,
+      offsetY: 129,
       kerning: 0,
 
       strokeColor: "#81E9F2",
@@ -1054,7 +1054,8 @@ function layoutBoxGlyphs(box, font) {
   const trackingPx = (box.kerning / 1000) * box.fontSize;
 
   const placed = [];
-  let y = box.offsetY;
+  // X/Y is the top-left corner of the text box: the first baseline sits one ascender below Y.
+  let y = box.offsetY + font.hExtents().ascender;
   for (const line of lines) {
     if (line.length > 0) {
       const infos = shapeText(box, font, line);
