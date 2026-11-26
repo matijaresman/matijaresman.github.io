@@ -55,7 +55,10 @@ let playing = false;
 let playStartMillis = 0;
 let currentT = 0;
 let fps = 30;
-let wasPlayingBeforeRecord = true;
+
+// MP4 export:
+let exportingVideo = false;
+let cancelVideoExport = false;
 
 // PNG sequence export:
 const SIM_RATE = 60; // sound smoothing runs at the live draw rate so exports animate like the preview
@@ -593,7 +596,7 @@ function buildGlobalControls() {
   svgWrap.addClass("field");
   createButton("Save as SVG").parent(svgWrap).addClass("full-btn").mousePressed(exportSVG);
   createButton("Export PNG sequence").parent(panelEl).addClass("full-btn").mousePressed(exportPNGSequence);
-  createButton("Record video (WebM, with audio)").parent(panelEl).addClass("full-btn").mousePressed(recordVideo);
+  createButton("Export MP4 (no audio)").parent(panelEl).addClass("full-btn").mousePressed(exportMP4);
 }
 
 // Canvas size:
@@ -1841,59 +1844,180 @@ function exportSVG() {
   URL.revokeObjectURL(url);
 }
 
-function recordVideo() {
-  if (!hbFace) return;
+// MP4 export (silent):
+// Renders frame by frame on the timeline clock, exactly like the PNG sequence export (same
+// range, same FPS, same offline sound reaction), but encodes the frames as H.264 with the
+// browser's video encoder (WebCodecs) and packs them into an .mp4 with the mp4-muxer library.
+// The video has no audio. MP4 can't be transparent, so a transparent background is filled
+// with the background color. Frames are scaled to the chosen resolution (also on Retina screens).
+// Click the button again to cancel.
 
-  const canvasEl = p5Canvas.canvas;
-  if (!canvasEl.captureStream) {
-    statusEl.html("This browser doesn't support canvas.captureStream().");
+async function exportMP4() {
+  if (exportingVideo) {
+    cancelVideoExport = true;
+    return;
+  }
+  if (exportingFrames) {
+    statusEl.html("Wait for the PNG sequence export to finish (or cancel it) first.");
+    return;
+  }
+  if (!hbFace) return;
+  if (typeof VideoEncoder === "undefined" || typeof VideoFrame === "undefined" || typeof Mp4Muxer === "undefined") {
+    statusEl.html("This browser can't export MP4. Please use a recent Chrome, Edge or Safari.");
     return;
   }
 
-  const videoStream = canvasEl.captureStream(fps);
-  let combinedStream = videoStream;
+  const w = canvasW;
+  const h = canvasH;
+  const videoFps = fps;
 
-  if (audioLoaded) {
-    const ctx = ensureAudioCtx();
-    if (ctx.state === "suspended") ctx.resume();
-    ensureAudioGraph();
-    const dest = ctx.createMediaStreamDestination();
-    audioSourceNode.connect(dest);
-    combinedStream = new MediaStream([...videoStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+  // Find an H.264 setting the browser supports at this size and frame rate:
+  const bitrate = Math.round(w * h * videoFps * 0.35); // ~16 Mbps at 1080 × 1440, 30 fps
+  let config = null;
+  for (const codec of ["avc1.640034", "avc1.640033", "avc1.4d0034", "avc1.42003e"]) {
+    const c = { codec, width: w, height: h, bitrate, framerate: videoFps };
+    try {
+      const support = await VideoEncoder.isConfigSupported(c);
+      if (support.supported) {
+        config = c;
+        break;
+      }
+    } catch (e) {}
+  }
+  if (!config) {
+    statusEl.html(`This browser can't encode H.264 video at ${w} × ${h}, ${videoFps} fps.`);
+    return;
   }
 
-  const mimeCandidates = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
-  const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || "video/webm";
-  const recorder = new MediaRecorder(combinedStream, { mimeType });
-  const chunks = [];
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) chunks.push(e.data);
-  };
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: "video/webm" });
+  // exportingFrames also stops the resolution from being changed during the export.
+  exportingVideo = true;
+  exportingFrames = true;
+  cancelVideoExport = false;
+  const wasPlaying = playing;
+  const savedT = currentT;
+  playing = false;
+  if (audioLoaded) audioEl.elt.pause();
+  playButton.html("Play");
+  noLoop();
+
+  let encoder = null;
+  let encodeError = null;
+
+  try {
+    const durationS = audioLoaded ? audioDuration : FALLBACK_DURATION;
+    // Either slider may be the earlier one:
+    const startS = Math.min(exportStart, exportEnd, durationS);
+    const endS = Math.min(Math.max(exportStart, exportEnd), durationS);
+    const frameCount = Math.max(1, Math.round((endS - startS) * videoFps));
+
+    let spectra = null;
+    if (audioLoaded && audioBuffer) {
+      statusEl.html("Analysing audio ...");
+      spectra = await analyseSpectraOffline(SIM_RATE);
+    }
+
+    // Start the sound smoothing from rest, like a fresh playback:
+    resetSoundLevels();
+    for (const box of boxes) {
+      box.chaos = 0;
+      box.bandLoudness = 0;
+      box.flickerPhase = 0;
+      getBoxBands(box).fill(0);
+    }
+
+    const muxer = new Mp4Muxer.Muxer({
+      target: new Mp4Muxer.ArrayBufferTarget(),
+      video: { codec: "avc", width: w, height: h },
+      fastStart: "in-memory",
+    });
+    encoder = new VideoEncoder({
+      output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+      error: (e) => {
+        encodeError = e;
+      },
+    });
+    encoder.configure(config);
+
+    // Each frame is copied onto its own canvas in the exact video size, on the background color:
+    const frameCanvas = document.createElement("canvas");
+    frameCanvas.width = w;
+    frameCanvas.height = h;
+    const fc = frameCanvas.getContext("2d");
+    fc.imageSmoothingEnabled = true;
+    fc.imageSmoothingQuality = "high";
+
+    let simStep = 0;
+
+    for (let f = 0; f < frameCount; f++) {
+      if (encodeError) throw encodeError;
+      if (cancelVideoExport) {
+        statusEl.html(`MP4 export cancelled after ${f} frames.`);
+        return;
+      }
+
+      // The sound smoothing still runs from 0 s, so frames match a full playback:
+      currentT = startS + f / videoFps;
+      if (spectra) {
+        while (simStep <= currentT * SIM_RATE && simStep < spectra.length) {
+          spectrum.set(spectra[simStep]);
+          stepSound();
+          simStep++;
+        }
+      } else {
+        for (const box of boxes) box.chaos = 0;
+      }
+
+      renderFrame();
+      fc.fillStyle = bgColor;
+      fc.fillRect(0, 0, w, h);
+      fc.drawImage(p5Canvas.elt, 0, 0, w, h);
+
+      const frame = new VideoFrame(frameCanvas, {
+        timestamp: Math.round((f * 1000000) / videoFps),
+        duration: Math.round(1000000 / videoFps),
+      });
+      encoder.encode(frame, { keyFrame: f % (videoFps * 2) === 0 });
+      frame.close();
+
+      // Show progress and let the encoder catch up:
+      if (f % 5 === 0 || f === frameCount - 1 || encoder.encodeQueueSize > 4) {
+        statusEl.html(`Exporting MP4 frame ${f + 1} / ${frameCount} (click the button again to cancel) ...`);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+
+    statusEl.html("Finishing MP4 ...");
+    await encoder.flush();
+    if (encodeError) throw encodeError;
+    muxer.finalize();
+
+    const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "mbz34-sound-reactive.webm";
+    a.download = "mbz34-sound-reactive.mp4";
     a.click();
-    URL.revokeObjectURL(url);
-    playing = wasPlayingBeforeRecord;
-    playButton.html(playing ? "Pause" : "Play");
-    statusEl.html("Saved mbz34-sound-reactive.webm");
-  };
-
-  wasPlayingBeforeRecord = playing;
-  currentT = 0;
-  if (audioLoaded) audioEl.elt.currentTime = 0;
-  playing = true;
-  playStartMillis = millis();
-  if (audioLoaded) audioEl.elt.play();
-  playButton.html("Pause");
-
-  const durationS = audioLoaded ? audioDuration : FALLBACK_DURATION;
-  recorder.start();
-  statusEl.html(`Recording ${durationS.toFixed(1)}s at ${fps}fps${transparentBg ? " (transparent)" : ""} ...`);
-  setTimeout(() => recorder.stop(), durationS * 1000 + 200);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    statusEl.html(
+      `Exported MP4 (${w} × ${h}, ${frameCount} frames, ${startS.toFixed(2)}s to ${endS.toFixed(2)}s at ${videoFps} fps, no audio).`
+    );
+  } catch (err) {
+    console.error(err);
+    statusEl.html(`MP4 export failed: ${err && err.message ? err.message : err}`);
+  } finally {
+    if (encoder) {
+      try {
+        encoder.close();
+      } catch (e) {}
+    }
+    exportingVideo = false;
+    exportingFrames = false;
+    currentT = savedT;
+    if (audioLoaded) audioEl.elt.currentTime = savedT;
+    timeSlider.value(currentT);
+    if (wasPlaying) togglePlay();
+    loop();
+  }
 }
 
 // PNG sequence export:
