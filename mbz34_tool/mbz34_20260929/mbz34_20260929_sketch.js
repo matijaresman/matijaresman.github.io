@@ -454,6 +454,9 @@ function buildGlobalControls() {
   statusEl.addClass("status");
   statusEl.parent(panelEl);
 
+  // Saved layouts:
+  buildLayoutControls();
+
   // Font source:
   section("Font");
   const fontWrap = createDiv("").parent(panelEl);
@@ -462,6 +465,7 @@ function buildGlobalControls() {
   const fontSelect = createSelect().parent(fontWrap);
   FONT_FILES.forEach((f) => fontSelect.option(f));
   fontSelect.changed(() => loadFontFile(fontSelect.value()));
+  fontSelectEl = fontSelect;
 
   const fileWrap = createDiv("").parent(panelEl);
   fileWrap.addClass("field");
@@ -487,8 +491,10 @@ function buildGlobalControls() {
     const [w, h] = sizeSelect.value().split("x").map(Number);
     if (!setCanvasSize(w, h)) sizeSelect.selected(`${canvasW}x${canvasH}`);
   });
-  colorField(panelEl, "Background", bgColor, (v) => (bgColor = v));
+  sizeSelectEl = sizeSelect;
+  bgColorInputEl = colorField(panelEl, "Background", bgColor, (v) => (bgColor = v));
   const transparentCb = createCheckbox("Transparent background", transparentBg).parent(panelEl);
+  transparentCbEl = transparentCb;
   transparentCb.style("color", "#ccc");
   transparentCb.style("font-size", "12px");
   transparentCb.style("margin-bottom", "10px");
@@ -496,7 +502,7 @@ function buildGlobalControls() {
     transparentBg = transparentCb.checked();
     p5Canvas.elt.classList.toggle("transparent-bg", transparentBg);
   });
-  sliderField(panelEl, "Zoom (centered, x)", 1, 5, zoom, 0.01, (v) => (zoom = v));
+  zoomSliderEl = sliderField(panelEl, "Zoom (centered, x)", 1, 5, zoom, 0.01, (v) => (zoom = v));
 
   // Audio:
   section("Audio");
@@ -975,7 +981,7 @@ function buildRenderSectionForBox(box, parent) {
 function loadFontFile(path) {
   currentFontPath = path;
   statusEl.html(`Loading ${path} ...`);
-  fetch(path)
+  return fetch(path)
     .then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.arrayBuffer();
@@ -991,12 +997,15 @@ function loadFontFile(path) {
 }
 
 function onFontLoaded(buf, name) {
-  hbReady
+  return hbReady
     .then(() => {
+      const fontBytes = buf.slice(0); // own copy of the file, so a layout can store it
       const blob = new HB.Blob(buf);
       const face = new HB.Face(blob, 0);
       hbFace = face;
       fvarAxes = Object.values(face.getAxisInfos());
+      loadedFontName = name;
+      loadedFontBuffer = fontBytes;
       statusEl.html(
         `Loaded ${name} -- upem ${face.upem}, ${fvarAxes.length} ${fvarAxes.length === 1 ? "axis" : "axes"}`
       );
@@ -2230,4 +2239,535 @@ function makeZip(entries) {
   end.setUint32(16, offset, true);
 
   return new Blob([...parts, ...central, end], { type: "application/zip" });
+}
+
+// ----------------- Layouts (named list, saved in this browser) -----------------
+// A layout is a copy of every setting except the audio: the font, canvas size, background,
+// zoom, all text boxes (including their sound-reactivity settings), margins, grid and guides.
+// Not saved: the audio track, the live sound levels, "Sampling detail", playback position
+// and the export settings (range and FPS), so any layout works with any song.
+// "Open" applies a layout in place (no page reload), so a loaded audio track stays loaded.
+//
+// The list is kept in localStorage. A font loaded from the computer is stored in the
+// browser's database (IndexedDB), once, however many layouts use it. Both only exist in
+// this browser on this computer: "Export file" / "Import file" save all layouts (with their
+// fonts) to a .json file and read them back -- for backups and for moving to another computer.
+
+const LAYOUTS_KEY = "mbz34-20260929-layouts"; // the whole github.io site shares one localStorage
+const LAYOUT_DB_NAME = "mbz34-20260929-layouts";
+// Box fields that change while sound plays, or belong to the font / UI -- never saved:
+const BOX_RUNTIME_KEYS = ["flickerPhase", "bands", "bandLoudness", "chaos", "hbFont", "hbBuffer", "hbFaceRef", "tabButtonEl", "ui"];
+const BOX_AXIS_KEYS = ["axisValues", "axisLoudValues", "axisReactive"];
+
+let loadedFontName = null; // name/path of the font that is loaded right now
+let loadedFontBuffer = null; // its file, so a layout can store a local font
+let fontSelectEl, sizeSelectEl, bgColorInputEl, transparentCbEl, zoomSliderEl;
+let layoutSelectEl;
+let layoutBusy = false;
+
+// UI:
+
+function buildLayoutControls() {
+  section("Layouts");
+  const wrap = createDiv("").parent(panelEl);
+  wrap.addClass("field");
+  fieldLabel(wrap, "Saved layouts (in this browser)");
+  layoutSelectEl = createSelect().parent(wrap);
+  refreshLayoutList();
+
+  let row = fieldRow(panelEl);
+  layoutButton(row, "Save as new", saveLayoutAsNew);
+  layoutButton(row, "Save", saveSelectedLayout);
+  row = fieldRow(panelEl);
+  layoutButton(row, "Open", openSelectedLayout);
+  layoutButton(row, "Rename", renameSelectedLayout);
+  layoutButton(row, "Delete", deleteSelectedLayout);
+  row = fieldRow(panelEl);
+  layoutButton(row, "Export file", exportLayoutsFile);
+  layoutButton(row, "Import file", pickLayoutsFile);
+}
+
+function layoutButton(row, label, action) {
+  const wrap = createDiv("").parent(row);
+  wrap.addClass("field");
+  const btn = createButton(label).parent(wrap).addClass("full-btn");
+  btn.mousePressed(() => {
+    btn.elt.blur();
+    runLayoutAction(action);
+  });
+}
+
+// One layout action at a time, and none during an export.
+async function runLayoutAction(action) {
+  if (layoutBusy) return;
+  if (exportingFrames) {
+    statusEl.html("Layouts can't be changed during an export.");
+    return;
+  }
+  layoutBusy = true;
+  try {
+    await action();
+  } catch (err) {
+    console.error(err);
+    statusEl.html(`Layout action failed: ${err && err.message ? err.message : err}`);
+  } finally {
+    layoutBusy = false;
+  }
+}
+
+function refreshLayoutList(selectName) {
+  const list = readLayouts();
+  const sel = layoutSelectEl.elt;
+  const keep = selectName !== undefined ? selectName : sel.value;
+  sel.innerHTML = "";
+  if (!list.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "(no layouts saved yet)";
+    sel.appendChild(opt);
+    return;
+  }
+  for (const L of list) {
+    const opt = document.createElement("option");
+    opt.value = L.name;
+    opt.textContent = L.name;
+    sel.appendChild(opt);
+  }
+  sel.value = list.some((L) => L.name === keep) ? keep : list[0].name;
+}
+
+function selectedLayoutName() {
+  return layoutSelectEl.elt.value || null;
+}
+
+function askLayoutName(message, suggestion) {
+  const answer = prompt(message, suggestion);
+  if (answer === null) return null;
+  const name = answer.trim();
+  return name || null;
+}
+
+function uniqueLayoutName(list, base) {
+  if (!list.some((L) => L.name === base)) return base;
+  let n = 2;
+  while (list.some((L) => L.name === `${base} (${n})`)) n++;
+  return `${base} (${n})`;
+}
+
+// Actions:
+
+async function saveLayoutAsNew() {
+  const list = readLayouts();
+  const name = askLayoutName("Name for the new layout:", uniqueLayoutName(list, `Layout ${list.length + 1}`));
+  if (!name) return;
+  const existing = list.findIndex((L) => L.name === name);
+  if (existing >= 0 && !confirm(`A layout called "${name}" already exists. Replace it?`)) return;
+  await storeLayout(list, name, existing);
+}
+
+async function saveSelectedLayout() {
+  const name = selectedLayoutName();
+  if (!name) return saveLayoutAsNew();
+  if (!confirm(`Replace "${name}" with the current settings?`)) return;
+  const list = readLayouts();
+  await storeLayout(list, name, list.findIndex((L) => L.name === name));
+}
+
+async function storeLayout(list, name, index) {
+  const entry = { name, savedAt: new Date().toISOString(), settings: await collectLayout() };
+  if (index >= 0) list[index] = entry;
+  else list.push(entry);
+  writeLayouts(list);
+  refreshLayoutList(name);
+  cleanUpLayoutFonts();
+  statusEl.html(`Saved layout "${name}".`);
+}
+
+async function openSelectedLayout() {
+  const name = selectedLayoutName();
+  const entry = name && readLayouts().find((L) => L.name === name);
+  if (!entry) {
+    statusEl.html("Save a layout first, then choose it in the list to open it.");
+    return;
+  }
+  statusEl.html(`Opening layout "${name}" ...`);
+  const note = await applyLayout(entry.settings);
+  statusEl.html(`Opened layout "${name}".${note}`);
+}
+
+async function renameSelectedLayout() {
+  const name = selectedLayoutName();
+  if (!name) return;
+  const list = readLayouts();
+  const newName = askLayoutName(`New name for "${name}":`, name);
+  if (!newName || newName === name) return;
+  if (list.some((L) => L.name === newName)) {
+    statusEl.html(`A layout called "${newName}" already exists. Choose another name.`);
+    return;
+  }
+  const entry = list.find((L) => L.name === name);
+  if (!entry) return;
+  entry.name = newName;
+  writeLayouts(list);
+  refreshLayoutList(newName);
+  statusEl.html(`Renamed "${name}" to "${newName}".`);
+}
+
+async function deleteSelectedLayout() {
+  const name = selectedLayoutName();
+  if (!name) return;
+  if (!confirm(`Delete the layout "${name}"? This can't be undone.`)) return;
+  writeLayouts(readLayouts().filter((L) => L.name !== name));
+  refreshLayoutList();
+  cleanUpLayoutFonts();
+  statusEl.html(`Deleted layout "${name}".`);
+}
+
+// All layouts and the local fonts they use, in one .json file:
+async function exportLayoutsFile() {
+  const list = readLayouts();
+  if (!list.length) {
+    statusEl.html("There are no layouts to export yet.");
+    return;
+  }
+  const fonts = {};
+  for (const key of layoutFontKeys(list)) {
+    const buf = await layoutFontGet(key).catch(() => null);
+    if (buf) fonts[key] = bufferToBase64(buf);
+  }
+  const data = { app: "mbz34-layouts", version: 1, exportedAt: new Date().toISOString(), layouts: list, fonts };
+  const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+  const stamp = new Date().toISOString().slice(0, 10);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mbz34-layouts-${stamp}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  statusEl.html(`Exported ${list.length} ${list.length === 1 ? "layout" : "layouts"} to a .json file.`);
+}
+
+// The file picker isn't awaited (a cancelled picker never reports back); the import runs
+// as its own action once a file is chosen.
+function pickLayoutsFile() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (file) runLayoutAction(() => importLayoutsFile(file));
+  });
+  input.click();
+}
+
+async function importLayoutsFile(file) {
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch (e) {
+    statusEl.html(`"${file.name}" isn't a layouts file.`);
+    return;
+  }
+  if (!data || data.app !== "mbz34-layouts" || !Array.isArray(data.layouts)) {
+    statusEl.html(`"${file.name}" isn't a layouts file from this tool.`);
+    return;
+  }
+  const fonts = data.fonts && typeof data.fonts === "object" ? data.fonts : {};
+  for (const key of Object.keys(fonts)) {
+    if (typeof fonts[key] === "string") await layoutFontPut(key, base64ToBuffer(fonts[key]));
+  }
+  // Layouts with a name that is already taken are added with a number, nothing is replaced:
+  const list = readLayouts();
+  let added = 0;
+  for (const L of data.layouts) {
+    if (!L || typeof L.name !== "string" || !L.name.trim() || !L.settings || typeof L.settings !== "object") continue;
+    list.push({ name: uniqueLayoutName(list, L.name.trim()), savedAt: L.savedAt || null, settings: L.settings });
+    added++;
+  }
+  writeLayouts(list);
+  refreshLayoutList();
+  cleanUpLayoutFonts();
+  statusEl.html(`Imported ${added} ${added === 1 ? "layout" : "layouts"} from "${file.name}".`);
+}
+
+// Storage:
+
+function readLayouts() {
+  try {
+    const list = JSON.parse(localStorage.getItem(LAYOUTS_KEY));
+    return Array.isArray(list) ? list.filter((L) => L && typeof L.name === "string" && L.settings) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeLayouts(list) {
+  localStorage.setItem(LAYOUTS_KEY, JSON.stringify(list));
+}
+
+// Collecting & applying:
+
+// Every current setting except the audio, as plain data:
+async function collectLayout() {
+  let font;
+  if (loadedFontBuffer && !FONT_FILES.includes(loadedFontName)) {
+    // A font from the computer: store the file itself, the name alone can't be loaded again.
+    const key = fontKey(loadedFontBuffer);
+    await layoutFontPut(key, loadedFontBuffer);
+    font = { file: loadedFontName, asset: key };
+  } else {
+    font = { file: loadedFontName || currentFontPath };
+  }
+  return {
+    version: 1,
+    font,
+    canvas: `${canvasW}x${canvasH}`,
+    bgColor,
+    transparentBg,
+    zoom,
+    boxes: boxes.map(boxSettings),
+    activeBoxIndex,
+    margins: { ...margins },
+    grid: { ...grid },
+    guides: guides.map((g) => ({ ...g })),
+    activeGuideIndex,
+  };
+}
+
+// The settings of one text box, without the live sound values and the font / UI objects:
+function boxSettings(box) {
+  const out = {};
+  for (const key of Object.keys(createBox({}))) {
+    if (BOX_RUNTIME_KEYS.includes(key)) continue;
+    out[key] = box[key] === undefined ? null : JSON.parse(JSON.stringify(box[key]));
+  }
+  return out;
+}
+
+// Puts a saved layout into the variables and rebuilds the controls. Anything missing or of the
+// wrong type keeps its default. Returns a note for the status line ("" if all went well).
+async function applyLayout(s) {
+  let note = "";
+  const num = (v, d, min = -Infinity, max = Infinity) => (typeof v === "number" && isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  const bool = (v, d) => (typeof v === "boolean" ? v : d);
+  const hex = (v, d) => (typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : d);
+
+  // 1. Font first: loading a font resets the axis values, so they're applied after it.
+  const f = s.font && typeof s.font === "object" ? s.font : {};
+  if (typeof f.file === "string" && f.file) {
+    if (f.asset) {
+      const buf = await layoutFontGet(f.asset).catch(() => null);
+      if (buf) {
+        currentFontPath = f.file;
+        await onFontLoaded(buf, f.file);
+      }
+    } else if (FONT_FILES.includes(f.file)) {
+      await loadFontFile(f.file);
+      if (fontSelectEl) fontSelectEl.selected(f.file);
+    }
+    if (loadedFontName !== f.file) {
+      note += ` The font "${f.file}" isn't available, so the current font was kept -- its axis settings may differ.`;
+    }
+  }
+
+  // 2. Canvas size (before margins and guides, which must fit inside it):
+  if (typeof s.canvas === "string") {
+    const [w, h] = s.canvas.split("x").map(Number);
+    if (CANVAS_SIZES.some(([cw, ch]) => cw === w && ch === h) && setCanvasSize(w, h)) {
+      sizeSelectEl.selected(`${w}x${h}`);
+    }
+  }
+
+  // 3. Background & zoom:
+  bgColor = hex(s.bgColor, bgColor);
+  transparentBg = bool(s.transparentBg, transparentBg);
+  zoom = num(s.zoom, zoom, 1, 5);
+  setColorFieldValue(bgColorInputEl, bgColor);
+  transparentCbEl.checked(transparentBg);
+  p5Canvas.elt.classList.toggle("transparent-bg", transparentBg);
+  setSliderFieldValue(zoomSliderEl, zoom);
+
+  // 4. Text boxes:
+  if (Array.isArray(s.boxes) && s.boxes.length) {
+    const defaults = createBox({});
+    const usedIds = new Set();
+    const loaded = s.boxes.filter((sb) => sb && typeof sb === "object").map((sb) => {
+      const b = createBox({});
+      for (const key of Object.keys(defaults)) {
+        if (BOX_RUNTIME_KEYS.includes(key) || BOX_AXIS_KEYS.includes(key) || key === "id") continue;
+        b[key] = sameKindOrDefault(sb[key], defaults[key]);
+      }
+      // Ids are kept: the flicker pattern of a box is based on its id.
+      if (Number.isInteger(sb.id) && sb.id > 0 && !usedIds.has(sb.id)) b.id = sb.id;
+      else b.id = 0;
+      if (b.id) usedIds.add(b.id);
+
+      // Axis values for the font that is loaded now, kept inside its ranges:
+      applyDefaultAxesToBox(b);
+      for (const axis of fvarAxes) {
+        const tag = axis.tag;
+        if (sb.axisValues && tag in sb.axisValues) b.axisValues[tag] = num(sb.axisValues[tag], b.axisValues[tag], axis.min, axis.max);
+        if (sb.axisLoudValues && tag in sb.axisLoudValues) b.axisLoudValues[tag] = num(sb.axisLoudValues[tag], b.axisLoudValues[tag], axis.min, axis.max);
+        if (sb.axisReactive && typeof sb.axisReactive[tag] === "boolean") b.axisReactive[tag] = sb.axisReactive[tag];
+      }
+      return b;
+    });
+    if (loaded.length) {
+      let maxId = Math.max(0, ...usedIds);
+      for (const b of loaded) if (!b.id) b.id = ++maxId;
+      boxes = loaded;
+      nextBoxId = maxId + 1;
+      activeBoxIndex = Math.round(num(s.activeBoxIndex, 0, 0, boxes.length - 1));
+    }
+  }
+
+  // 5. Margins, grid and guide lines:
+  const m = s.margins && typeof s.margins === "object" ? s.margins : {};
+  margins.show = bool(m.show, margins.show);
+  margins.top = num(m.top, margins.top, 0, canvasH / 2);
+  margins.bottom = num(m.bottom, margins.bottom, 0, canvasH / 2);
+  margins.left = num(m.left, margins.left, 0, canvasW / 2);
+  margins.right = num(m.right, margins.right, 0, canvasW / 2);
+  margins.color = hex(m.color, margins.color);
+
+  const g = s.grid && typeof s.grid === "object" ? s.grid : {};
+  grid.show = bool(g.show, grid.show);
+  grid.rows = Math.round(num(g.rows, grid.rows, 1, 24));
+  grid.columns = Math.round(num(g.columns, grid.columns, 1, 24));
+  grid.color = hex(g.color, grid.color);
+
+  if (Array.isArray(s.guides)) {
+    let maxGuideId = 0;
+    guides = s.guides
+      .filter((sg) => sg && typeof sg === "object")
+      .map((sg) => {
+        const orientation = sg.orientation === "vertical" ? "vertical" : "horizontal";
+        const id = Number.isInteger(sg.id) && sg.id > 0 ? sg.id : 0;
+        maxGuideId = Math.max(maxGuideId, id);
+        return {
+          id,
+          label: typeof sg.label === "string" ? sg.label : "Guide",
+          show: bool(sg.show, false),
+          orientation,
+          position: num(sg.position, 0, 0, orientation === "horizontal" ? canvasH : canvasW),
+          color: hex(sg.color, GUIDE_COLOR),
+        };
+      });
+    for (const gd of guides) if (!gd.id) gd.id = ++maxGuideId;
+    nextGuideId = maxGuideId + 1;
+    activeGuideIndex = Math.round(num(s.activeGuideIndex, 0, 0, Math.max(0, guides.length - 1)));
+  }
+
+  // 6. Controls:
+  buildGuidesControls();
+  buildTabBar();
+  renderBoxSettingsUI();
+  return note;
+}
+
+// A saved value if it has the same kind as the default (objects are merged into the default):
+function sameKindOrDefault(v, d) {
+  if (d === null || d === undefined) return v === undefined ? d : v;
+  if (typeof d === "number") return typeof v === "number" && isFinite(v) ? v : d;
+  if (typeof d === "object") {
+    if (!v || typeof v !== "object" || Array.isArray(v) !== Array.isArray(d)) return JSON.parse(JSON.stringify(d));
+    const out = JSON.parse(JSON.stringify(d));
+    for (const k of Object.keys(out)) out[k] = sameKindOrDefault(v[k], out[k]);
+    return out;
+  }
+  return typeof v === typeof d ? v : d;
+}
+
+// Moves a slider made by sliderField(), and its number box, to a value:
+function setSliderFieldValue(slider, v) {
+  if (!slider) return;
+  slider.value(v);
+  const box = slider.elt.parentElement.querySelector("input.val-input");
+  if (box) box.value = String(v);
+}
+
+// Sets a color field made by colorField() (the picker and its hex box):
+function setColorFieldValue(input, v) {
+  if (!input) return;
+  input.elt.value = v.toLowerCase();
+  const box = input.elt.parentElement.querySelector("input.val-input");
+  if (box) box.value = v.toUpperCase();
+}
+
+// Fonts from the computer (IndexedDB):
+
+let layoutDB = null;
+
+function openLayoutDB() {
+  if (!layoutDB) {
+    layoutDB = new Promise((resolve, reject) => {
+      const req = indexedDB.open(LAYOUT_DB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("fonts");
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  return layoutDB;
+}
+
+async function layoutFontPut(key, buf) {
+  const db = await openLayoutDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("fonts", "readwrite");
+    tx.objectStore("fonts").put(buf, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function layoutFontGet(key) {
+  const db = await openLayoutDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction("fonts").objectStore("fonts").get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function layoutFontKeys(list) {
+  const keys = new Set();
+  for (const L of list) if (L.settings && L.settings.font && L.settings.font.asset) keys.add(L.settings.font.asset);
+  return keys;
+}
+
+// Removes stored fonts that no layout uses any more:
+async function cleanUpLayoutFonts() {
+  try {
+    const used = layoutFontKeys(readLayouts());
+    const db = await openLayoutDB();
+    const store = db.transaction("fonts", "readwrite").objectStore("fonts");
+    const req = store.getAllKeys();
+    req.onsuccess = () => {
+      for (const key of req.result) if (!used.has(key)) store.delete(key);
+    };
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// A fingerprint of a font file (same file = same key, so it's stored only once):
+function fontKey(buf) {
+  const bytes = new Uint8Array(buf);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < bytes.length; i++) h = Math.imul(h ^ bytes[i], 16777619);
+  return `font-${(h >>> 0).toString(36)}-${bytes.length}`;
+}
+
+function bufferToBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+function base64ToBuffer(b64) {
+  const s = atob(b64);
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
+  return bytes.buffer;
 }
